@@ -1,8 +1,98 @@
-<!DOCTYPE html>\
-<html>\
-<body>\
-<h1>Hello World</h1>\
-<p>I'm hosted with GitHub Pages.</p>\
-</body>\
-</html>\
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discussion Time Planner</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    label, input, button { display: block; margin: 0.5rem 0; }
+    .results { margin-top: 1.5rem; }
+    .time-block { margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Discussion Time Planner</h1>
+
+  <label for="totalParagraphs">Total Paragraphs:</label>
+  <input type="number" id="totalParagraphs" min="1" required>
+
+  <label for="introParagraphs">Introductory Paragraphs (not under subheadings):</label>
+  <input type="number" id="introParagraphs" min="0" required>
+
+  <label for="numSubheadings">Number of Subheadings:</label>
+  <input type="number" id="numSubheadings" min="1" required>
+
+  <label for="paragraphsPerSubheading">Paragraphs per Subheading (comma separated):</label>
+  <input type="text" id="paragraphsPerSubheading" placeholder="e.g., 3,4,2">
+
+  <button onclick="calculateTimes()">Calculate</button>
+
+  <div class="results" id="results"></div>
+
+  <script>
+    function roundToNearestHalfMinute(seconds) {
+      return Math.round(seconds / 30) * 30;
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function calculateTimes() {
+      const totalParagraphs = parseInt(document.getElementById('totalParagraphs').value);
+      const introParagraphs = parseInt(document.getElementById('introParagraphs').value);
+      const numSubheadings = parseInt(document.getElementById('numSubheadings').value);
+      const paragraphArray = document.getElementById('paragraphsPerSubheading').value
+        .split(',')
+        .map(p => parseInt(p.trim()));
+
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      if (paragraphArray.length !== numSubheadings || paragraphArray.some(isNaN)) {
+        resultsDiv.textContent = 'Error: Ensure paragraph counts match the number of subheadings and are valid numbers.';
+        return;
+      }
+
+      const subheadingParagraphs = paragraphArray.reduce((a, b) => a + b, 0);
+      const totalCountCheck = introParagraphs + subheadingParagraphs;
+      if (totalCountCheck !== totalParagraphs) {
+        resultsDiv.textContent = 'Error: Intro + Subheading paragraphs must equal total paragraphs.';
+        return;
+      }
+
+      const introCommentsTime = 60;
+      const conclusionTime = 60;
+      const totalTime = 3600;
+
+      const avgParagraphTime = Math.floor((totalTime - introCommentsTime - conclusionTime) / totalParagraphs);
+      const introParagraphsTime = roundToNearestHalfMinute(introParagraphs * avgParagraphTime);
+      const reviewTime = roundToNearestHalfMinute(avgParagraphTime);
+
+      const remainingTime = totalTime - introCommentsTime - introParagraphsTime - conclusionTime - reviewTime;
+
+      let elapsed = introCommentsTime;
+      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Comments:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
+
+      elapsed += introParagraphsTime;
+      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Paragraphs:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
+
+      for (let i = 0; i < numSubheadings; i++) {
+        const proportion = paragraphArray[i] / subheadingParagraphs;
+        const subTime = roundToNearestHalfMinute(proportion * remainingTime);
+        elapsed += subTime;
+        resultsDiv.innerHTML += `<div class='time-block'><strong>Subheading ${i + 1}:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
+      }
+
+      elapsed += reviewTime;
+      resultsDiv.innerHTML += `<div class='time-block'><strong>Review:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
+
+      elapsed += conclusionTime;
+      resultsDiv.innerHTML += `<div class='time-block'><strong>Conclusion:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
+    }
+  </script>
+</body>
+</html>
