@@ -185,60 +185,52 @@
     document.getElementById('discussion-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const totalMinutes = parseInt(document.getElementById('meeting-length').value, 10);
-      const openingStatementTime = 1; // 60 seconds intro
-      const closingStatementTime = 1; // 60 seconds outro
-      let fixedTime = openingStatementTime + closingStatementTime;
-      let totalParagraphs = 0;
+      const openingStatementTime = 1;
+      const closingStatementTime = 1;
       let sectionData = [];
 
       const introParas = parseInt(document.getElementById('intro-paragraphs').value, 10);
       let introExtra = 0;
       if (document.getElementById('intro-picture').checked) introExtra++;
       if (document.getElementById('intro-scripture').checked) introExtra++;
-      fixedTime += introExtra;
       sectionData.push({ name: 'Intro', paragraphs: introParas, extras: introExtra });
-      totalParagraphs += introParas;
 
       for (let i = 0; i < subheadingCount; i++) {
         const paras = parseInt(document.querySelector(`[name='subheading-${i}-paragraphs']`).value, 10);
         let extras = 0;
         if (document.querySelector(`[name='subheading-${i}-picture']`).checked) extras++;
         if (document.querySelector(`[name='subheading-${i}-scripture']`).checked) extras++;
-        fixedTime += extras;
         sectionData.push({ name: `Subheading ${i + 1}`, paragraphs: paras, extras });
-        totalParagraphs += paras;
       }
 
-      const remainingTime = totalMinutes - fixedTime;
-      const introWeight = 0.5; // Intro paragraphs get half weight
-      let weightedParagraphs = 0;
+      const introWeight = 0.5;
+      sectionData.forEach(sec => sec.weight = sec.name === 'Intro' ? introWeight : 1);
 
-      sectionData.forEach((sec) => {
-        const weight = sec.name === 'Intro' ? introWeight : 1;
-        sec.weighted = sec.paragraphs * weight;
-        weightedParagraphs += sec.weighted;
-      });
+      const totalWeightedParas = sectionData.reduce((sum, sec) => sum + sec.paragraphs * sec.weight, 0);
+      const totalExtras = sectionData.reduce((sum, sec) => sum + sec.extras, 0);
 
-      const timePerWeightedParagraph = remainingTime / weightedParagraphs;
-      let cumulativeTime = fixedTime;
+      const availableTime = totalMinutes - openingStatementTime - closingStatementTime;
+      const discussionTime = availableTime - totalExtras;
+      const timePerWeightedPara = discussionTime / totalWeightedParas;
 
+      let currentTime = openingStatementTime;
       const output = document.getElementById('output');
       output.innerHTML = '';
 
       const fixedCard = document.createElement('div');
       fixedCard.className = 'time-card';
-      fixedCard.textContent = `Fixed Time: ${fixedTime.toFixed(2)} min (includes 1 min opening + 1 min closing + extras)\nRemaining Time for discussion: ${remainingTime.toFixed(2)} min`;
+      fixedCard.textContent = `Fixed Time: ${(openingStatementTime + closingStatementTime + totalExtras).toFixed(2)} min\nRemaining Time for paragraphs: ${discussionTime.toFixed(2)} min`;
       output.appendChild(fixedCard);
 
-      sectionData.forEach((sec) => {
-        const sectionTime = sec.weighted * timePerWeightedParagraph + sec.extras;
-        cumulativeTime += sectionTime;
-        const endBy = new Date(0, 0, 0, 0, Math.floor(cumulativeTime), Math.round((cumulativeTime % 1) * 60));
+      sectionData.forEach(sec => {
+        const time = sec.paragraphs * sec.weight * timePerWeightedPara + sec.extras;
+        currentTime += time;
+        const endBy = new Date(0, 0, 0, 0, Math.floor(currentTime), Math.round((currentTime % 1) * 60));
         const endByStr = endBy.toTimeString().substring(0, 5);
 
         const card = document.createElement('div');
         card.className = 'time-card';
-        card.textContent = `${sec.name}: ${sectionTime.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)\nEnd by: ${endByStr}`;
+        card.textContent = `${sec.name}: ${time.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)\nEnd by: ${endByStr}`;
         output.appendChild(card);
       });
     });
