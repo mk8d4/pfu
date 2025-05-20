@@ -69,6 +69,14 @@
       padding: 1rem;
       background-color: var(--card);
       border-radius: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .subheading-block label {
+      margin: 0;
+      flex: 1 1 auto;
     }
     .top-bar {
       display: flex;
@@ -106,10 +114,10 @@
   <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark/Light</button>
 
   <label for="totalParagraphs">Total Paragraphs:</label>
-  <select id="totalParagraphs"></select>
+  <select id="totalParagraphs" onchange="updateIntroOptions()"></select>
 
   <label for="introParagraphs">Introductory Paragraphs (not under subheadings):</label>
-  <select id="introParagraphs"></select>
+  <select id="introParagraphs" onchange="generateSubheadingFields()"></select>
 
   <label for="numSubheadings">Number of Subheadings:</label>
   <select id="numSubheadings" onchange="generateSubheadingFields()"></select>
@@ -142,105 +150,59 @@
       document.body.classList.toggle('light');
     }
 
-    for (let i = 1; i <= 50; i++) {
+    function updateIntroOptions() {
+      const total = parseInt(document.getElementById('totalParagraphs').value);
+      const introSelect = document.getElementById('introParagraphs');
+      introSelect.innerHTML = '';
+      for (let i = 0; i <= total; i++) {
+        introSelect.innerHTML += `<option value="${i}">${i}</option>`;
+      }
+      generateSubheadingFields();
+    }
+
+    for (let i = 1; i <= 24; i++) {
       document.getElementById('totalParagraphs').innerHTML += `<option value="${i}">${i}</option>`;
-      document.getElementById('introParagraphs').innerHTML += `<option value="${i}">${i}</option>`;
       document.getElementById('numSubheadings').innerHTML += `<option value="${i}">${i}</option>`;
     }
 
     function generateSubheadingFields() {
       const container = document.getElementById('subheadingInputs');
       container.innerHTML = '';
-      const count = parseInt(document.getElementById('numSubheadings').value);
-      for (let i = 0; i < count; i++) {
+      const total = parseInt(document.getElementById('totalParagraphs').value);
+      const intro = parseInt(document.getElementById('introParagraphs').value);
+      const num = parseInt(document.getElementById('numSubheadings').value);
+      let remaining = total - intro;
+
+      for (let i = 0; i < num; i++) {
         const block = document.createElement('div');
         block.classList.add('subheading-block');
-        block.innerHTML = `
-          <label>Subheading ${i + 1} - Paragraphs:</label>
-          <select id="para${i}">${[...Array(20).keys()].map(n => `<option value="${n + 1}">${n + 1}</option>`).join('')}</select>
-          <label><input type="checkbox" id="scripture${i}"> Includes Scripture</label>
-          <label><input type="checkbox" id="picture${i}"> Includes Picture</label>
-        `;
+
+        const select = document.createElement('select');
+        select.id = `para${i}`;
+        select.style.maxWidth = '60px';
+        select.onchange = () => generateSubheadingFields();
+
+        for (let j = 1; j <= remaining; j++) {
+          select.innerHTML += `<option value="${j}">${j}</option>`;
+        }
+
+        const label = document.createElement('label');
+        label.textContent = `Subheading ${i + 1} - Paragraphs:`;
+        label.appendChild(select);
+
+        const scriptureLabel = document.createElement('label');
+        scriptureLabel.innerHTML = `<input type="checkbox" id="scripture${i}"> Read Scripture`;
+
+        const pictureLabel = document.createElement('label');
+        pictureLabel.innerHTML = `<input type="checkbox" id="picture${i}"> Pictures`;
+
+        block.appendChild(label);
+        block.appendChild(scriptureLabel);
+        block.appendChild(pictureLabel);
         container.appendChild(block);
+
+        if (select.value) remaining -= parseInt(select.value);
       }
-    }
-
-    function roundToNearestHalfMinute(seconds) {
-      return Math.round(seconds / 30) * 30;
-    }
-
-    function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function formatClockTime(offsetSeconds) {
-      const totalEndSeconds = (endHour * 3600) + (endMinute * 60);
-      const sectionTime = totalEndSeconds - (totalTime - offsetSeconds);
-      const date = new Date(0, 0, 0, 0, 0, sectionTime);
-      const h = date.getHours() % 12 || 12;
-      const m = date.getMinutes().toString().padStart(2, '0');
-      const a = date.getHours() >= 12 ? 'PM' : 'AM';
-      return `${h}:${m} ${a}`;
-    }
-
-    function calculateTimes() {
-      updateEndTime();
-      const totalParagraphs = parseInt(document.getElementById('totalParagraphs').value);
-      const introParagraphs = parseInt(document.getElementById('introParagraphs').value);
-      const numSubheadings = parseInt(document.getElementById('numSubheadings').value);
-
-      let paragraphArray = [], extrasArray = [];
-
-      for (let i = 0; i < numSubheadings; i++) {
-        const paras = parseInt(document.getElementById(`para${i}`).value);
-        const hasScripture = document.getElementById(`scripture${i}`).checked ? 1 : 0;
-        const hasPicture = document.getElementById(`picture${i}`).checked ? 1 : 0;
-        paragraphArray.push(paras);
-        extrasArray.push(hasScripture + hasPicture);
-      }
-
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
-
-      const introCommentsTime = 60;
-      const conclusionTime = 60;
-
-      const subheadingParagraphs = paragraphArray.reduce((a, b) => a + b, 0);
-      const totalCountCheck = introParagraphs + subheadingParagraphs;
-      if (totalCountCheck !== totalParagraphs) {
-        resultsDiv.textContent = 'Error: Intro + Subheading paragraphs must equal total paragraphs.';
-        return;
-      }
-
-      const avgParagraphTime = Math.floor((totalTime - introCommentsTime - conclusionTime) / totalParagraphs);
-      const introParagraphsTime = roundToNearestHalfMinute(introParagraphs * avgParagraphTime);
-      const reviewTime = roundToNearestHalfMinute(avgParagraphTime);
-
-      const remainingTime = totalTime - introCommentsTime - introParagraphsTime - conclusionTime - reviewTime;
-
-      const adjustedWeights = paragraphArray.map((p, i) => p + extrasArray[i]);
-      const totalWeight = adjustedWeights.reduce((a, b) => a + b, 0);
-
-      let elapsed = introCommentsTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Comments:</strong> <span class='highlight'>End by ${formatTime(roundToNearestHalfMinute(elapsed))} (${formatClockTime(roundToNearestHalfMinute(elapsed))})</span></div>`;
-
-      elapsed += introParagraphsTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Paragraphs:</strong> <span class='highlight'>End by ${formatTime(roundToNearestHalfMinute(elapsed))} (${formatClockTime(roundToNearestHalfMinute(elapsed))})</span></div>`;
-
-      for (let i = 0; i < numSubheadings; i++) {
-        const proportion = adjustedWeights[i] / totalWeight;
-        const subTime = roundToNearestHalfMinute(proportion * remainingTime);
-        elapsed += subTime;
-        resultsDiv.innerHTML += `<div class='time-block'><strong>Subheading ${i + 1}:</strong> <span class='highlight'>End by ${formatTime(roundToNearestHalfMinute(elapsed))} (${formatClockTime(roundToNearestHalfMinute(elapsed))})</span></div>`;
-      }
-
-      elapsed += reviewTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Review:</strong> <span class='highlight'>End by ${formatTime(roundToNearestHalfMinute(elapsed))} (${formatClockTime(roundToNearestHalfMinute(elapsed))})</span></div>`;
-
-      elapsed += conclusionTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Conclusion:</strong> <span class='highlight'>End by ${formatTime(roundToNearestHalfMinute(elapsed))} (${formatClockTime(roundToNearestHalfMinute(elapsed))})</span></div>`;
     }
   </script>
 </body>
