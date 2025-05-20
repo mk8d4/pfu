@@ -1,5 +1,5 @@
 {
-  "name": "Discussion Time Allocator",
+  "name": "WT Timer",
   "short_name": "WT Timer",
   "start_url": "./index.html",
   "display": "standalone",
