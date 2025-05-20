@@ -36,9 +36,10 @@
     input, select {
       padding: 0.5rem;
       border-radius: 5px;
-      border: none;
+      border: 1px solid var(--accent);
       background-color: var(--card);
       color: var(--text);
+      font-size: 1rem;
     }
     button {
       margin-top: 1rem;
@@ -77,10 +78,17 @@
       max-width: 600px;
       margin-bottom: 1rem;
     }
-    .top-bar button {
-      background-color: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
+    .theme-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      z-index: 1000;
     }
   </style>
 </head>
@@ -93,8 +101,9 @@
         <option value="co">Week of the CO (30 min)</option>
       </select>
     </label>
-    <button onclick="toggleTheme()">Toggle Dark/Light</button>
   </div>
+
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle Dark/Light</button>
 
   <label for="totalParagraphs">Total Paragraphs:</label>
   <select id="totalParagraphs"></select>
