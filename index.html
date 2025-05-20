@@ -185,7 +185,9 @@
     document.getElementById('discussion-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const totalMinutes = parseInt(document.getElementById('meeting-length').value, 10);
-      let fixedTime = 1.5 + 1;
+      const openingStatementTime = 1; // 60 seconds intro
+      const closingStatementTime = 1; // 60 seconds outro
+      let fixedTime = openingStatementTime + closingStatementTime;
       let totalParagraphs = 0;
       let sectionData = [];
 
@@ -211,7 +213,7 @@
       const introWeight = 0.5; // Intro paragraphs get half weight
       let weightedParagraphs = 0;
 
-      sectionData.forEach((sec, index) => {
+      sectionData.forEach((sec) => {
         const weight = sec.name === 'Intro' ? introWeight : 1;
         sec.weighted = sec.paragraphs * weight;
         weightedParagraphs += sec.weighted;
@@ -225,7 +227,7 @@
 
       const fixedCard = document.createElement('div');
       fixedCard.className = 'time-card';
-      fixedCard.textContent = `Fixed Time: ${fixedTime.toFixed(2)} min\nRemaining Time for discussion: ${remainingTime.toFixed(2)} min`;
+      fixedCard.textContent = `Fixed Time: ${fixedTime.toFixed(2)} min (includes 1 min opening + 1 min closing + extras)\nRemaining Time for discussion: ${remainingTime.toFixed(2)} min`;
       output.appendChild(fixedCard);
 
       sectionData.forEach((sec) => {
