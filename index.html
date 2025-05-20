@@ -1,98 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Discussion Time Planner</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    label, input, button { display: block; margin: 0.5rem 0; }
-    .results { margin-top: 1.5rem; }
-    .time-block { margin-bottom: 0.5rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discussion Timer</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-dark: #4338ca;
+            --secondary: #f97316;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+        }
+        
+        body {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.5;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.03);
+            padding: 2rem;
+        }
+        
+        h1 {
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            font-size: 1.875rem;
+            text-align: center;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        h2 {
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+        
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            margin-bottom: 0.5rem;
+        }
+        
+        select:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .results-container {
+            display: none;
+            margin-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 2rem;
+        }
+        
+        .results-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .results-heading h2 {
+            margin-bottom: 0;
+        }
+        
+        .timing-card {
+            background-color: var(--gray-100);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .timing-card h3 {
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+            font-size: 1.125rem;
+        }
+        
+        .timing-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timing-info span {
+            font-weight: 500;
+        }
+        
+        .timing-info .time {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .summary-container {
+            margin-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 1rem;
+        }
+        
+        .summary-box {
+            background-color: var(--primary-light);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .summary-box p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-box p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Responsive styles */
+        @media (min-width: 640px) {
+            .form-row {
+                display: flex;
+                gap: 1rem;
+            }
+            
+            .form-row .input-group {
+                flex: 1;
+            }
+        }
+        
+        .print-button {
+            background-color: var(--gray-700);
+            margin-top: 1rem;
+        }
+        
+        .print-button:hover {
+            background-color: var(--gray-900);
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+                background-color: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .form-section, .print-button {
+                display: none;
+            }
+            
+            .results-container {
+                display: block !important;
+                border-top: none;
+                padding-top: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Discussion Time Planner</h1>
-
-  <label for="totalParagraphs">Total Paragraphs:</label>
-  <input type="number" id="totalParagraphs" min="1" required>
-
-  <label for="introParagraphs">Introductory Paragraphs (not under subheadings):</label>
-  <input type="number" id="introParagraphs" min="0" required>
-
-  <label for="numSubheadings">Number of Subheadings:</label>
-  <input type="number" id="numSubheadings" min="1" required>
-
-  <label for="paragraphsPerSubheading">Paragraphs per Subheading (comma separated):</label>
-  <input type="text" id="paragraphsPerSubheading" placeholder="e.g., 3,4,2">
-
-  <button onclick="calculateTimes()">Calculate</button>
-
-  <div class="results" id="results"></div>
-
-  <script>
-    function roundToNearestHalfMinute(seconds) {
-      return Math.round(seconds / 30) * 30;
-    }
-
-    function formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function calculateTimes() {
-      const totalParagraphs = parseInt(document.getElementById('totalParagraphs').value);
-      const introParagraphs = parseInt(document.getElementById('introParagraphs').value);
-      const numSubheadings = parseInt(document.getElementById('numSubheadings').value);
-      const paragraphArray = document.getElementById('paragraphsPerSubheading').value
-        .split(',')
-        .map(p => parseInt(p.trim()));
-
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
-
-      if (paragraphArray.length !== numSubheadings || paragraphArray.some(isNaN)) {
-        resultsDiv.textContent = 'Error: Ensure paragraph counts match the number of subheadings and are valid numbers.';
-        return;
-      }
-
-      const subheadingParagraphs = paragraphArray.reduce((a, b) => a + b, 0);
-      const totalCountCheck = introParagraphs + subheadingParagraphs;
-      if (totalCountCheck !== totalParagraphs) {
-        resultsDiv.textContent = 'Error: Intro + Subheading paragraphs must equal total paragraphs.';
-        return;
-      }
-
-      const introCommentsTime = 60;
-      const conclusionTime = 60;
-      const totalTime = 3600;
-
-      const avgParagraphTime = Math.floor((totalTime - introCommentsTime - conclusionTime) / totalParagraphs);
-      const introParagraphsTime = roundToNearestHalfMinute(introParagraphs * avgParagraphTime);
-      const reviewTime = roundToNearestHalfMinute(avgParagraphTime);
-
-      const remainingTime = totalTime - introCommentsTime - introParagraphsTime - conclusionTime - reviewTime;
-
-      let elapsed = introCommentsTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Comments:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
-
-      elapsed += introParagraphsTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Intro Paragraphs:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
-
-      for (let i = 0; i < numSubheadings; i++) {
-        const proportion = paragraphArray[i] / subheadingParagraphs;
-        const subTime = roundToNearestHalfMinute(proportion * remainingTime);
-        elapsed += subTime;
-        resultsDiv.innerHTML += `<div class='time-block'><strong>Subheading ${i + 1}:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
-      }
-
-      elapsed += reviewTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Review:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
-
-      elapsed += conclusionTime;
-      resultsDiv.innerHTML += `<div class='time-block'><strong>Conclusion:</strong> End by ${formatTime(roundToNearestHalfMinute(elapsed))}</div>`;
-    }
-  </script>
+    <div class="container">
+        <h1>Discussion Timer Calculator</h1>
+        
+        <div class="form-section">
+            <h2>Article Structure</h2>
+            
+            <div class="input-group">
+                <label for="discussionType">Discussion Type:</label>
+                <select id="discussionType">
+                    <option value="regular">Regular (60 minutes)</option>
+                    <option value="co">Week of the CO (30 minutes)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="introParas">Number of Introduction Paragraphs:</label>
+                <input type="number" id="introParas" min="1" value="2">
+            </div>
+            
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="subheadings">Number of Subheadings:</label>
+                    <input type="number" id="subheadings" min="1" value="3">
+                </div>
+                
+                <div class="input-group" id="reviewGroup">
+                    <label for="includeReview">Include Review?</label>
+                    <select id="includeReview">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="subheadingContainer"></div>
+            
+            <button id="calculateBtn">Calculate Timings</button>
+        </div>
+        
+        <div class="results-container" id="resultsContainer">
+            <div class="results-heading">
+                <h2>Discussion Schedule</h2>
+                <div>
+                    <button class="print-button" id="printBtn">Print Schedule</button>
+                </div>
+            </div>
+            
+            <div id="timingsContainer"></div>
+            
+            <div class="summary-container">
+                <div class="summary-box">
+                    <p><strong>Total Discussion Time:</strong> <span id="totalTime">60:00</span></p>
+                    <p><strong>Opening Comments:</strong> 00:00 - 01:00</p>
+                    <p><strong>Closing Comments:</strong> <span id="closingRange">59:00 - 60:00</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const discussionTypeEl = document.getElementById('discussionType');
+        const introParagraphsEl = document.getElementById('introParas');
+        const subheadingsEl = document.getElementById('subheadings');
+        const includeReviewEl = document.getElementById('includeReview');
+        const subheadingContainerEl = document.getElementById('subheadingContainer');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsContainerEl = document.getElementById('resultsContainer');
+        const timingsContainerEl = document.getElementById('timingsContainer');
+        const totalTimeEl = document.getElementById('totalTime');
+        const closingRangeEl = document.getElementById('closingRange');
+        const printBtn = document.getElementById('printBtn');
+        
+        // Event Listeners
+        subheadingsEl.addEventListener('change', updateSubheadingInputs);
+        calculateBtn.addEventListener('click', calculateTimings);
+        printBtn.addEventListener('click', () => window.print());
+        discussionTypeEl.addEventListener('change', updateTotalTime);
+        
+        // Initial setup
+        updateSubheadingInputs();
+        
+        function updateTotalTime() {
+            const discussionType = discussionTypeEl.value;
+            const totalMinutes = discussionType === 'regular' ? 60 : 30;
+            totalTimeEl.textContent = `${totalMinutes}:00`;
+            closingRangeEl.textContent = `${totalMinutes - 1}:00 - ${totalMinutes}:00`;
+        }
+        
+        function updateSubheadingInputs() {
+            const count = parseInt(subheadingsEl.value);
+            
+            // Clear container
+            subheadingContainerEl.innerHTML = '';
+            
+            // Create input groups for each subheading
+            for (let i = 1; i <= count; i++) {
+                const inputGroup = document.createElement('div');
+                inputGroup.classList.add('input-group');
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', `subheading${i}Paras`);
+                label.textContent = `Paragraphs in Subheading ${i}:`;
+                
+                const input = document.createElement('input');
+                input.setAttribute('type', 'number');
+                input.setAttribute('id', `subheading${i}Paras`);
+                input.setAttribute('min', '1');
+                input.setAttribute('value', '3');
+                
+                inputGroup.appendChild(label);
+                inputGroup.appendChild(input);
+                subheadingContainerEl.appendChild(inputGroup);
+            }
+        }
+        
+        function formatTime(minutes) {
+            const mins = Math.floor(minutes);
+            const secs = Math.round((minutes - mins) * 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function calculateTimings() {
+            // Get inputs
+            const discussionType = discussionTypeEl.value;
+            const totalDuration = discussionType === 'regular' ? 60 : 30; // in minutes
+            const introParas = parseInt(introParagraphsEl.value);
+            const subheadingsCount = parseInt(subheadingsEl.value);
+            const includeReview = includeReviewEl.value === 'yes';
+            
+            // Get paragraphs for each subheading
+            const subheadingParas = [];
+            let totalParas = introParas;
+            
+            for (let i = 1; i <= subheadingsCount; i++) {
+                const paraCount = parseInt(document.getElementById(`subheading${i}Paras`).value);
+                subheadingParas.push(paraCount);
+                totalParas += paraCount;
+            }
+            
+            // Calculate time allocations
+            const openingTime = 1; // 1 minute for opening comments
+            const closingTime = 1; // 1 minute for closing comments
+            
+            // Available time for content discussion
+            let availableTime = totalDuration - openingTime - closingTime;
+            
+            // If review is included, calculate review time as average paragraph time
+            let reviewTime = 0;
+            if (includeReview) {
+                // Review time is equivalent to average time per paragraph
+                reviewTime = availableTime / (totalParas + 1); // +1 for the review itself
+                availableTime -= reviewTime;
+            }
+            
+            // Calculate time per paragraph
+            const timePerPara = availableTime / totalParas;
+            
+            // Calculate time for intro paragraphs
+            const introTime = introParas * timePerPara;
+            
+            // Create timings array
+            const timings = [];
+            
+            // Starting point after opening comments
+            let currentTime = openingTime;
+            
+            // Add intro timing
+            timings.push({
+                name: 'Introduction Paragraphs',
+                paragraphs: introParas,
+                duration: introTime,
+                startTime: currentTime,
+                endTime: currentTime + introTime
+            });
+            
+            currentTime += introTime;
+            
+            // Add subheading timings
+            for (let i = 0; i < subheadingsCount; i++) {
+                const subheadingTime = subheadingParas[i] * timePerPara;
+                
+                timings.push({
+                    name: `Subheading ${i + 1}`,
+                    paragraphs: subheadingParas[i],
+                    duration: subheadingTime,
+                    startTime: currentTime,
+                    endTime: currentTime + subheadingTime
+                });
+                
+                currentTime += subheadingTime;
+            }
+            
+            // Add review if included
+            if (includeReview) {
+                timings.push({
+                    name: 'Review',
+                    paragraphs: 1,
+                    duration: reviewTime,
+                    startTime: currentTime,
+                    endTime: currentTime + reviewTime
+                });
+                
+                currentTime += reviewTime;
+            }
+            
+            // Add closing
+            timings.push({
+                name: 'Closing Comments',
+                paragraphs: 0,
+                duration: closingTime,
+                startTime: currentTime,
+                endTime: totalDuration
+            });
+            
+            // Display results
+            displayResults(timings, totalDuration);
+        }
+        
+        function displayResults(timings, totalDuration) {
+            // Clear previous results
+            timingsContainerEl.innerHTML = '';
+            
+            // Update total time display
+            totalTimeEl.textContent = `${totalDuration}:00`;
+            closingRangeEl.textContent = `${formatTime(timings[timings.length - 1].startTime)} - ${totalDuration}:00`;
+            
+            // Create timing cards
+            timings.forEach((timing, index) => {
+                if (index === timings.length - 1) return; // Skip displaying the closing comments card
+                
+                const card = document.createElement('div');
+                card.classList.add('timing-card');
+                
+                const title = document.createElement('h3');
+                title.textContent = timing.name;
+                card.appendChild(title);
+                
+                const timeInfo = document.createElement('div');
+                timeInfo.classList.add('timing-info');
+                timeInfo.innerHTML = `
+                    <div>Start at: <span class="time">${formatTime(timing.startTime)}</span></div>
+                    <div>End by: <span class="time">${formatTime(timing.endTime)}</span></div>
+                `;
+                card.appendChild(timeInfo);
+                
+                const paragraphInfo = document.createElement('div');
+                paragraphInfo.classList.add('timing-info');
+                
+                // Only show paragraph counts for content sections, not for closing comments
+                if (timing.name !== 'Closing Comments') {
+                    paragraphInfo.innerHTML = `
+                        <div>Paragraphs: <span>${timing.paragraphs}</span></div>
+                        <div>Duration: <span>${formatTime(timing.duration)}</span></div>
+                    `;
+                }
+                
+                card.appendChild(paragraphInfo);
+                timingsContainerEl.appendChild(card);
+            });
+            
+            // Show results container
+            resultsContainerEl.style.display = 'block';
+            
+            // Scroll to results
+            resultsContainerEl.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
 </body>
 </html>
