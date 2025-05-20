@@ -203,6 +203,8 @@
         sectionData.push({ name: `Subheading ${i + 1}`, paragraphs: paras, extras });
       }
 
+      sectionData.push({ name: 'Review', paragraphs: 1, extras: 0 });
+
       const introWeight = 0.5;
       sectionData.forEach(sec => sec.weight = sec.name === 'Intro' ? introWeight : 1);
 
