@@ -1,4 +1,11 @@
 {
+  "name": "Discussion Time Allocator",
+  "short_name": "WT Timer",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#333333",
+  "description": "Plan and allocate time for Watchtower article discussions.",
   "icons": [
     {
       "src": "icon-192.png",
