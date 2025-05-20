@@ -6,11 +6,94 @@
   <title>WT Discussion Timer</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --text: #333;
+      --card-bg: #fff;
+    }
+    [data-theme="dark"] {
+      --bg: #1e1e1e;
+      --text: #f9f9f9;
+      --card-bg: #2c2c2c;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    form, #output {
+      background-color: var(--card-bg);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+    h1, h2 {
+      margin: 1rem 0 0.5rem;
+    }
+    label {
+      display: block;
+      margin: 0.5rem 0;
+    }
+    input[type="number"], select {
+      margin-top: 0.3rem;
+      padding: 0.4rem;
+      width: 100%;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    #theme-toggle {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: var(--card-bg);
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    #theme-toggle svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--text);
+    }
+  </style>
 </head>
 <body>
   <h1>Discussion Time Allocator</h1>
 
   <form id="discussion-form">
+    <label>
+      Meeting Length:
+      <select id="meeting-length">
+        <option value="60">60 minutes (Standard)</option>
+        <option value="30">30 minutes (Week of CO)</option>
+      </select>
+    </label>
     <label>
       Intro Paragraphs:
       <input type="number" id="intro-paragraphs" min="0" value="2" />
@@ -30,12 +113,38 @@
   <h2>Time Breakdown</h2>
   <pre id="output"></pre>
 
+  <div id="theme-toggle" title="Toggle theme">
+    <svg id="theme-icon" viewBox="0 0 24 24">
+      <path d="M12 2a9.93 9.93 0 0 0-7.07 2.93A9.93 9.93 0 0 0 2 12c0 2.66 1.07 5.21 2.93 7.07A9.93 9.93 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"></path>
+    </svg>
+  </div>
+
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');
     }
-  </script>
-  <script>
+
+    // Theme Toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    setThemeIcon(currentTheme);
+
+    themeToggle.onclick = () => {
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      setThemeIcon(theme);
+    };
+
+    function setThemeIcon(theme) {
+      themeIcon.innerHTML = theme === 'dark'
+        ? '<path d="M21.64 13.29A9 9 0 0 1 10.71 2.36 9 9 0 1 0 21.64 13.29z"></path>'
+        : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+    }
+
     const subheadingsContainer = document.getElementById('subheadings');
     const addBtn = document.getElementById('add-subheading');
     let subheadingCount = 0;
@@ -66,7 +175,7 @@
 
     document.getElementById('discussion-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const totalMinutes = 60;
+      const totalMinutes = parseInt(document.getElementById('meeting-length').value, 10);
       let fixedTime = 1.5 + 1; // intro + conclusion
       let totalParagraphs = 0;
       let sectionData = [];
