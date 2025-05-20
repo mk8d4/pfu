@@ -79,6 +79,7 @@
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      white-space: pre-line;
     }
     #theme-toggle {
       position: fixed;
@@ -207,7 +208,17 @@
       }
 
       const remainingTime = totalMinutes - fixedTime;
-      const timePerParagraph = remainingTime / totalParagraphs;
+      const introWeight = 0.5; // Intro paragraphs get half weight
+      let weightedParagraphs = 0;
+
+      sectionData.forEach((sec, index) => {
+        const weight = sec.name === 'Intro' ? introWeight : 1;
+        sec.weighted = sec.paragraphs * weight;
+        weightedParagraphs += sec.weighted;
+      });
+
+      const timePerWeightedParagraph = remainingTime / weightedParagraphs;
+      let cumulativeTime = fixedTime;
 
       const output = document.getElementById('output');
       output.innerHTML = '';
@@ -218,10 +229,14 @@
       output.appendChild(fixedCard);
 
       sectionData.forEach((sec) => {
-        const sectionTime = (sec.paragraphs * timePerParagraph) + sec.extras;
+        const sectionTime = sec.weighted * timePerWeightedParagraph + sec.extras;
+        cumulativeTime += sectionTime;
+        const endBy = new Date(0, 0, 0, 0, Math.floor(cumulativeTime), Math.round((cumulativeTime % 1) * 60));
+        const endByStr = endBy.toTimeString().substring(0, 5);
+
         const card = document.createElement('div');
         card.className = 'time-card';
-        card.textContent = `${sec.name}: ${sectionTime.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)`;
+        card.textContent = `${sec.name}: ${sectionTime.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)\nEnd by: ${endByStr}`;
         output.appendChild(card);
       });
     });
