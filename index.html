@@ -149,8 +149,8 @@
       Intro Paragraphs:
       <input type="number" id="intro-paragraphs" min="0" value="2" />
     </label>
-    <label><input type="checkbox" id="intro-picture" /> Intro Picture</label>
-    <label><input type="checkbox" id="intro-scripture" /> Intro Scripture</label>
+    <label><input type="checkbox" id="intro-picture" /> Picture</label>
+    <label><input type="checkbox" id="intro-scripture" /> Scripture</label>
 
     <div id="subheadings"></div>
     <button type="button" id="add-subheading">Add Subheading</button>
@@ -192,7 +192,12 @@
 <script>
     const subheadingsContainer = document.getElementById('subheadings');
     const addBtn = document.getElementById('add-subheading');
-    let subheadingCount = 0;
+    let subheadingCount = 3;
+
+    for (let i = 0; i < subheadingCount; i++) {
+      const initialInput = createSubheadingInput(i);
+      subheadingsContainer.appendChild(initialInput);
+    }
 
     function createSubheadingInput(index) {
       const div = document.createElement('div');
