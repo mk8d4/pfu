@@ -115,3 +115,139 @@
     }
   </style>
 </head>
+<body>
+  <h1>Discussion Time Allocator</h1>
+
+  <form id="discussion-form">
+    <label>
+      Meeting Length:
+      <select id="meeting-length">
+        <option value="60">60 minutes (Standard)</option>
+        <option value="30">30 minutes (Week of CO)</option>
+      </select>
+    </label>
+    <label>
+      Intro Paragraphs:
+      <input type="number" id="intro-paragraphs" min="0" value="2" />
+    </label>
+    <label><input type="checkbox" id="intro-picture" /> Intro Picture</label>
+    <label><input type="checkbox" id="intro-scripture" /> Intro Scripture</label>
+
+    <div id="subheadings"></div>
+    <button type="button" id="add-subheading">Add Subheading</button>
+    <button type="submit">Calculate</button>
+  </form>
+
+  <h2>Time Breakdown</h2>
+  <div id="output"></div>
+
+  <div id="theme-toggle" title="Toggle theme">
+    <svg id="theme-icon" viewBox="0 0 24 24"></svg>
+  </div>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js');
+    }
+
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const currentTheme = localStorage.getItem('theme') || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    setThemeIcon(currentTheme);
+
+    themeToggle.onclick = () => {
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      setThemeIcon(theme);
+    };
+
+    function setThemeIcon(theme) {
+      themeIcon.innerHTML = theme === 'dark'
+        ? '<path d="M21.64 13.29A9 9 0 0 1 10.71 2.36 9 9 0 1 0 21.64 13.29z"/>'
+        : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+    }
+  </script>
+<script>
+    const subheadingsContainer = document.getElementById('subheadings');
+    const addBtn = document.getElementById('add-subheading');
+    let subheadingCount = 0;
+
+    function createSubheadingInput(index) {
+      const div = document.createElement('div');
+      div.classList.add('subheading');
+      div.innerHTML = `
+        <label>
+          Subheading ${index + 1} Paragraphs:
+          <input type="number" name="subheading-${index}-paragraphs" min="0" required />
+        </label>
+        <label><input type="checkbox" name="subheading-${index}-picture" /> Picture</label>
+        <label><input type="checkbox" name="subheading-${index}-scripture" /> Scripture</label>
+      `;
+      return div;
+    }
+
+    addBtn.addEventListener('click', () => {
+      const newInput = createSubheadingInput(subheadingCount);
+      subheadingsContainer.appendChild(newInput);
+      subheadingCount++;
+    });
+
+    document.getElementById('discussion-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const totalMinutes = parseInt(document.getElementById('meeting-length').value, 10);
+      const openingStatementTime = 1;
+      const closingStatementTime = 1;
+      let sectionData = [];
+
+      const introParas = parseInt(document.getElementById('intro-paragraphs').value, 10);
+      let introExtra = 0;
+      if (document.getElementById('intro-picture').checked) introExtra++;
+      if (document.getElementById('intro-scripture').checked) introExtra++;
+      sectionData.push({ name: 'Intro', paragraphs: introParas, extras: introExtra });
+
+      for (let i = 0; i < subheadingCount; i++) {
+        const paras = parseInt(document.querySelector(`[name='subheading-${i}-paragraphs']`).value, 10);
+        let extras = 0;
+        if (document.querySelector(`[name='subheading-${i}-picture']`).checked) extras++;
+        if (document.querySelector(`[name='subheading-${i}-scripture']`).checked) extras++;
+        sectionData.push({ name: `Subheading ${i + 1}`, paragraphs: paras, extras });
+      }
+
+      sectionData.push({ name: 'Review', paragraphs: 1, extras: 0 });
+
+      const introWeight = 0.5;
+      sectionData.forEach(sec => sec.weight = sec.name === 'Intro' ? introWeight : 1);
+
+      const totalWeightedParas = sectionData.reduce((sum, sec) => sum + sec.paragraphs * sec.weight, 0);
+      const totalExtras = sectionData.reduce((sum, sec) => sum + sec.extras, 0);
+
+      const availableTime = totalMinutes - openingStatementTime - closingStatementTime;
+      const discussionTime = availableTime - totalExtras;
+      const timePerWeightedPara = discussionTime / totalWeightedParas;
+
+      let currentTime = openingStatementTime;
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+
+      const fixedCard = document.createElement('div');
+      fixedCard.className = 'time-card';
+      fixedCard.textContent = `Fixed Time: ${(openingStatementTime + closingStatementTime + totalExtras).toFixed(2)} min\nRemaining Time for paragraphs: ${discussionTime.toFixed(2)} min`;
+      output.appendChild(fixedCard);
+
+      sectionData.forEach(sec => {
+        const time = sec.paragraphs * sec.weight * timePerWeightedPara + sec.extras;
+        currentTime += time;
+        const endBy = new Date(0, 0, 0, 0, Math.floor(currentTime), Math.round((currentTime % 1) * 60));
+        const endByStr = endBy.toTimeString().substring(0, 5);
+
+        const card = document.createElement('div');
+        card.className = 'time-card';
+        card.textContent = `${sec.name}: ${time.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)\nEnd by: ${endByStr}`;
+        output.appendChild(card);
+      });
+    });
+  </script>
+</body>
