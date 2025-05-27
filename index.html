@@ -88,11 +88,13 @@
 
       try {
         const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const html = await response.text();
+        console.log("Fetched HTML:", html.slice(0, 1000)); // Log first 1000 characters
         output.innerHTML = '';
         parseHtml(html, output);
       } catch (e) {
-        output.innerHTML = '<p>Error fetching article. Please check the URL.</p>';
+        output.innerHTML = `<p style="color:red;">Error fetching article: ${e.message}</p>`;
         console.error(e);
       }
     }
@@ -101,7 +103,7 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      const allElements = [...doc.body.querySelectorAll('body > *')];
+      const allElements = [...doc.querySelectorAll('h2, p')];
       const sections = [];
       let currentSection = { heading: 'Introduction', paragraphs: [], withExtras: 0, weightAdjust: 0.75 };
 
