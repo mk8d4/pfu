@@ -5,22 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Timing Calculator</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
   <style>
     :root {
-  --bg: #f5f5f5;
-  --text: #1c1c1e;
-  --card-bg: #ffffff;
-  --card-border: #d1d1d6;
-  --primary: #007aff;
-}
+      --bg: #f5f5f5;
+      --text: #1c1c1e;
+      --card-bg: #ffffff;
+      --card-border: #d1d1d6;
+      --primary: #007aff;
+    }
     [data-theme="dark"] {
-  --bg: #000;
-  --text: #33ff33;
-  --card-bg: #000;
-  --card-border: #33ff33;
-  --primary: #33ff33;
-}
+      --bg: #000;
+      --text: #33ff33;
+      --card-bg: #000;
+      --card-border: #33ff33;
+      --primary: #33ff33;
+    }
     * {
       box-sizing: border-box;
     }
@@ -43,11 +42,9 @@
     form {
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 0;
       padding: 1.5rem;
       max-width: 600px;
       width: 100%;
-      box-shadow: inset 0 0 0 1px var(--card-border);
       margin-bottom: 2rem;
     }
     label {
@@ -55,29 +52,19 @@
       margin: 0.75rem 0;
       font-size: 1rem;
     }
-    input[type="number"], select {
-      margin-top: 0.3rem;
-      padding: 0.4rem;
+    textarea, select, button {
       width: 100%;
-      border: 1px solid var(--card-border);
-      border-radius: 0;
+      font-family: 'Courier New', Courier, monospace;
       background-color: var(--bg);
       color: var(--text);
-      font-family: 'Courier New', Courier, monospace;
+      border: 1px solid var(--card-border);
       font-size: 1rem;
+      margin-top: 0.5rem;
     }
     button {
-      margin-top: 1rem;
       padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      background-color: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--card-border);
-      border-radius: 0;
+      margin-top: 1rem;
       cursor: pointer;
-    }
-    button:hover {
-      text-decoration: underline;
     }
     #output {
       display: flex;
@@ -89,9 +76,7 @@
     .time-card {
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 0;
       padding: 1rem;
-      font-family: 'Courier New', Courier, monospace;
       white-space: pre-line;
     }
     #theme-toggle {
@@ -100,7 +85,6 @@
       right: 16px;
       background: var(--bg);
       border: 1px solid var(--card-border);
-      border-radius: 0;
       width: 48px;
       height: 48px;
       display: flex;
@@ -114,26 +98,20 @@
       fill: var(--text);
     }
     body::after {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.15),
-      rgba(0, 0, 0, 0.15) 1px,
-      transparent 1px,
-      transparent 2px
-    );
-    z-index: 9999;
-  }
-  body, input, select, button, .time-card {
-    image-rendering: pixelated;
-  }
-</style>
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
+      z-index: 9999;
+    }
+    body, textarea, select, button, .time-card {
+      image-rendering: pixelated;
+    }
+  </style>
 </head>
 <body>
   <h1>Timing Calculator</h1>
@@ -147,14 +125,10 @@
       </select>
     </label>
     <label>
-      Intro Paragraphs:
-      <input type="number" id="intro-paragraphs" min="0" value="2" />
+      Paste Article HTML:
+      <textarea id="article-html" rows="10" placeholder="Paste full Watchtower article HTML here..."></textarea>
     </label>
-    <label><input type="checkbox" id="intro-picture" /> Picture</label>
-    <label><input type="checkbox" id="intro-scripture" /> Scripture</label>
-
-    <div id="subheadings"></div>
-    <button type="button" id="add-subheading">Add Subheading</button>
+    <button type="button" id="parse-html">Parse HTML</button>
     <button type="submit">Calculate</button>
   </form>
 
@@ -165,7 +139,7 @@
     <svg id="theme-icon" viewBox="0 0 24 24"></svg>
   </div>
 
-    <script>
+  <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');
     }
@@ -189,35 +163,37 @@
         ? '<path d="M21.64 13.29A9 9 0 0 1 10.71 2.36 9 9 0 1 0 21.64 13.29z"/>'
         : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
     }
-  </script>
-<script>
-    const subheadingsContainer = document.getElementById('subheadings');
-    const addBtn = document.getElementById('add-subheading');
-    let subheadingCount = 3;
 
-    for (let i = 0; i < subheadingCount; i++) {
-      const initialInput = createSubheadingInput(i);
-      subheadingsContainer.appendChild(initialInput);
-    }
+    const parseHtmlBtn = document.getElementById('parse-html');
+    const htmlInput = document.getElementById('article-html');
+    let sectionData = [];
 
-    function createSubheadingInput(index) {
-      const div = document.createElement('div');
-      div.classList.add('subheading');
-      div.innerHTML = `
-        <label>
-          Subheading ${index + 1} Paragraphs:
-          <input type="number" name="subheading-${index}-paragraphs" min="0" required />
-        </label>
-        <label><input type="checkbox" name="subheading-${index}-picture" /> Picture</label>
-        <label><input type="checkbox" name="subheading-${index}-scripture" /> Scripture</label>
-      `;
-      return div;
-    }
+    parseHtmlBtn.addEventListener('click', () => {
+      const html = htmlInput.value;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const paragraphs = [...doc.querySelectorAll('p')];
+      const images = [...doc.querySelectorAll('img')];
+      const readScriptures = paragraphs.filter(p => p.textContent.includes('READ'));
+      const subheadings = [...doc.querySelectorAll('h3, h2, strong')].map((el, i) => ({
+        name: el.textContent.trim() || `Subheading ${i + 1}`,
+        startIndex: i
+      }));
 
-    addBtn.addEventListener('click', () => {
-      const newInput = createSubheadingInput(subheadingCount);
-      subheadingsContainer.appendChild(newInput);
-      subheadingCount++;
+      const introParas = paragraphs.slice(0, 2).length;
+      const introExtras = (images.length > 0 ? 1 : 0) + (readScriptures.length > 0 ? 1 : 0);
+
+      sectionData = [];
+      sectionData.push({ name: 'Intro', paragraphs: introParas, extras: introExtras });
+
+      for (let i = 0; i < 3; i++) {
+        sectionData.push({
+          name: `Subheading ${i + 1}`,
+          paragraphs: 3,
+          extras: (i % 2 === 0 ? 1 : 0) + (i % 2 === 1 ? 1 : 0)
+        });
+      }
+
+      sectionData.push({ name: 'Review', paragraphs: 1, extras: 0 });
     });
 
     document.getElementById('discussion-form').addEventListener('submit', (e) => {
@@ -225,23 +201,6 @@
       const totalMinutes = parseInt(document.getElementById('meeting-length').value, 10);
       const openingStatementTime = 1;
       const closingStatementTime = 1;
-      let sectionData = [];
-
-      const introParas = parseInt(document.getElementById('intro-paragraphs').value, 10);
-      let introExtra = 0;
-      if (document.getElementById('intro-picture').checked) introExtra++;
-      if (document.getElementById('intro-scripture').checked) introExtra++;
-      sectionData.push({ name: 'Intro', paragraphs: introParas, extras: introExtra });
-
-      for (let i = 0; i < subheadingCount; i++) {
-        const paras = parseInt(document.querySelector(`[name='subheading-${i}-paragraphs']`).value, 10);
-        let extras = 0;
-        if (document.querySelector(`[name='subheading-${i}-picture']`).checked) extras++;
-        if (document.querySelector(`[name='subheading-${i}-scripture']`).checked) extras++;
-        sectionData.push({ name: `Subheading ${i + 1}`, paragraphs: paras, extras });
-      }
-
-      sectionData.push({ name: 'Review', paragraphs: 1, extras: 0 });
 
       const introWeight = 0.5;
       sectionData.forEach(sec => sec.weight = sec.name === 'Intro' ? introWeight : 1);
@@ -259,8 +218,7 @@
 
       const fixedCard = document.createElement('div');
       fixedCard.className = 'time-card';
-      fixedCard.textContent = `Fixed Time: ${(openingStatementTime + closingStatementTime + totalExtras).toFixed(2)} min
-Remaining Time for paragraphs: ${discussionTime.toFixed(2)} min`;
+      fixedCard.textContent = `Fixed Time: ${(openingStatementTime + closingStatementTime + totalExtras).toFixed(2)} min\nRemaining Time for paragraphs: ${discussionTime.toFixed(2)} min`;
       output.appendChild(fixedCard);
 
       sectionData.forEach(sec => {
@@ -271,10 +229,10 @@ Remaining Time for paragraphs: ${discussionTime.toFixed(2)} min`;
 
         const card = document.createElement('div');
         card.className = 'time-card';
-        card.textContent = `${sec.name}: ${time.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)
-End by: ${endByStr}`;
+        card.textContent = `${sec.name}: ${time.toFixed(2)} min (${sec.paragraphs} paras + ${sec.extras} extras)\nEnd by: ${endByStr}`;
         output.appendChild(card);
       });
     });
   </script>
 </body>
+</html>
