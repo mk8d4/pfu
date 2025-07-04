@@ -195,6 +195,11 @@
     const addBtn = document.getElementById('add-subheading');
     let subheadingCount = 3;
 
+    // create default subheading fields on load
+    for (let i = 0; i < subheadingCount; i++) {
+      subheadingsContainer.appendChild(createSubheadingInput(i));
+    }
+
     function createSubheadingInput(index) {
       const div = document.createElement('div');
       div.classList.add('subheading');
