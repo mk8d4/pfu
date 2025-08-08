@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>WTC – Watchtower Timing Calculator</title>
-  <!-- Tailwind CDN (for quick GH Pages hosting) -->
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="description" content="Calculate end-by times for a 60-minute Watchtower study discussion.">
   <style>
-    /* Extras for glassmorphism */
+    /* Glassmorphism + monospace for times */
     .glass { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
@@ -116,7 +116,197 @@
   </main>
 
   <script>
-    /* JS here — due to length, I can paste the full parsing & timing logic if you want me to drop it in next */
+    const $ = (sel) => document.querySelector(sel);
+    const urlEl = $("#url"), fetchBtn = $("#fetchBtn"), useCorsEl = $("#useCors"),
+          pasteBtn = $("#pasteBtn"), statusEl = $("#status"), htmlEl = $("#html"),
+          calcBtn = $("#calcBtn"), totalMinEl = $("#totalMin"), introSecEl = $("#introSec"),
+          conclSecEl = $("#conclSec"), readBonusEl = $("#readBonus"), picBonusEl = $("#picBonus"),
+          includeReviewEl = $("#includeReview"), resultsEl = $("#results"),
+          milestonesEl = $("#milestones"), paraCountEl = $("#paraCount"), sectionCountEl = $("#sectionCount"),
+          sectionsEl = $("#sections"), readsEl = $("#reads"), picsEl = $("#pics");
+
+    pasteBtn.addEventListener("click", () => {
+      if (!htmlEl.value) htmlEl.value = "<!-- Paste article HTML here if Fetch is blocked -->\\n";
+      htmlEl.scrollIntoView({ behavior: "smooth" });
+    });
+
+    fetchBtn.addEventListener("click", async () => {
+      statusEl.textContent = "";
+      const url = (urlEl.value || "").trim();
+      if (!url) { statusEl.textContent = "Enter a URL or paste HTML."; return; }
+      fetchBtn.disabled = true; fetchBtn.textContent = "Fetching…";
+      try {
+        const finalUrl = useCorsEl.checked
+          ? "https://r.jina.ai/http://" + url.replace(/^https?:\\/\\//, "")
+          : url;
+        const res = await fetch(finalUrl, { mode: "cors" });
+        const text = await res.text();
+        htmlEl.value = text;
+        statusEl.textContent = "Fetched.";
+      } catch {
+        statusEl.textContent = "Fetch failed (likely CORS). Toggle 'CORS helper' or paste HTML.";
+      } finally {
+        fetchBtn.disabled = false; fetchBtn.textContent = "Fetch";
+      }
+    });
+
+    calcBtn.addEventListener("click", () => {
+      const html = htmlEl.value;
+      if (!html || !html.trim()) { statusEl.textContent = "Paste HTML or use Fetch first."; return; }
+      try {
+        const structure = parseArticle(html);
+        const result = computeTimings({
+          structure,
+          totalSeconds: Number(totalMinEl.value) * 60,
+          introSeconds: Number(introSecEl.value),
+          conclusionSeconds: Number(conclSecEl.value),
+          readBonus: Number(readBonusEl.value),
+          pictureBonus: Number(picBonusEl.value),
+          includeReview: includeReviewEl.checked
+        });
+        renderResults(result);
+      } catch {
+        statusEl.textContent = "Parsing failed.";
+      }
+    });
+
+    function renderResults(result) {
+      milestonesEl.innerHTML = "";
+      for (const m of result.milestones) {
+        const li = document.createElement("li");
+        li.className = "flex justify-between border-b border-slate-200/60 pb-1";
+        li.innerHTML = \`<span>\${escapeHtml(m.label)}</span><span class="mono">\${formatTime(m.endBySeconds)}</span>\`;
+        milestonesEl.appendChild(li);
+      }
+      paraCountEl.textContent = result.structure.paragraphs.length;
+      sectionCountEl.textContent = result.structure.sections.length;
+      sectionsEl.innerHTML = "";
+      for (const s of result.structure.sections) {
+        const li = document.createElement("li");
+        li.innerHTML = \`<div class="font-medium">\${escapeHtml(s.title || "(untitled)")} <span class="text-slate-500">(¶\${s.startPid}–\${s.endPid})</span></div>\`;
+        sectionsEl.appendChild(li);
+      }
+      const readPids = result.structure.paragraphs.filter(p => p.hasRead).map(p => p.pid);
+      readsEl.textContent = readPids.length ? readPids.join(", ") : "none";
+      const picPids = result.structure.paragraphs.filter(p => p.hasPicture).map(p => p.pid);
+      picsEl.textContent = picPids.length ? picPids.join(", ") : "none";
+      resultsEl.classList.remove("hidden");
+      resultsEl.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function parseArticle(html) {
+      const dom = new DOMParser().parseFromString(html, "text/html");
+      const scope = dom.querySelector("article, main, [role=main], .content, #article") || dom.body;
+      const pNodes = Array.from(scope.querySelectorAll("p[data-pid], p[id^='p'], p.paragraph, p"));
+      const paragraphs = [];
+      for (const p of pNodes) {
+        let pid = null;
+        const dataPid = p.getAttribute("data-pid");
+        if (dataPid && /^\\d+$/.test(dataPid)) pid = Number(dataPid);
+        if (!pid) {
+          const id = p.getAttribute("id") || "";
+          const m = id.match(/^p(\\d+)$/i);
+          if (m) pid = Number(m[1]);
+        }
+        if (!pid) {
+          const txt = (p.textContent || "").trim();
+          const m2 = txt.match(/^(\\d{1,2})[\\s·.]/);
+          if (m2) pid = Number(m2[1]);
+        }
+        if (!pid) continue;
+        const text = (p.textContent || "").toUpperCase();
+        const hasRead = /\\bREAD\\b/.test(text) || /READ\\s*:\\s*/.test(text);
+        const hasPicture =
+          !!p.querySelector("img, figure") ||
+          !!(p.previousElementSibling && p.previousElementSibling.matches("figure, .media")) ||
+          !!(p.nextElementSibling && p.nextElementSibling.matches("figure, .media")) ||
+          /PICTURE|SEE PICTURE|IMAGE/i.test(p.textContent || "");
+        paragraphs.push({ pid, hasRead, hasPicture });
+      }
+      paragraphs.sort((a, b) => a.pid - b.pid);
+      const headingNodes = Array.from(scope.querySelectorAll("h2, h3"));
+      const sections = [];
+      for (let i = 0; i < headingNodes.length; i++) {
+        const h = headingNodes[i];
+        const title = (h.textContent || "").trim();
+        const startPid = pidOfNextParagraphAfter(h);
+        if (!startPid) continue;
+        let endPid = null;
+        for (let j = i + 1; j < headingNodes.length; j++) {
+          const nextStart = pidOfNextParagraphAfter(headingNodes[j]);
+          if (nextStart) { endPid = nextStart - 1; break; }
+        }
+        if (endPid == null) endPid = paragraphs.length ? paragraphs[paragraphs.length - 1].pid : startPid;
+        if (endPid < startPid) continue;
+        sections.push({ title, startPid, endPid });
+      }
+      sections.sort((a, b) => a.startPid - b.startPid);
+      return { paragraphs, sections };
+      function pidOfNextParagraphAfter(node) {
+        let n = node;
+        while ((n = n.nextElementSibling)) {
+          if (n.matches("p[data-pid], p[id^='p'], p.paragraph, p")) {
+            const t = (n.textContent || "").trim();
+            const id = n.getAttribute("id") || "";
+            const dataPid = n.getAttribute("data-pid");
+            let pid = null;
+            if (dataPid && /^\\d+$/.test(dataPid)) pid = Number(dataPid);
+            const m = id.match(/^p(\\d+)$/i) || t.match(/^(\\d{1,2})[\\s·.]/);
+            if (!pid && m) pid = Number(m[1]);
+            if (pid) return pid;
+          }
+        }
+        return null;
+      }
+    }
+
+    function computeTimings({ structure, totalSeconds, introSeconds, conclusionSeconds, readBonus, pictureBonus, includeReview }) {
+      const pool = Math.max(0, totalSeconds - introSeconds - conclusionSeconds);
+      const firstSectionStart = structure.sections[0]?.startPid ?? Infinity;
+      const openingParas = structure.paragraphs.filter(p => p.pid < firstSectionStart);
+      const buckets = [];
+      if (openingParas.length) {
+        const a = openingParas[0].pid, b = openingParas[openingParas.length - 1].pid;
+        buckets.push({ label: \`Opening paragraphs (¶\${a}–\${b})\`, pids: openingParas.map(p=>p.pid) });
+      }
+      for (const s of structure.sections) {
+        const pids = structure.paragraphs.filter(p => p.pid >= s.startPid && p.pid <= s.endPid).map(p => p.pid);
+        if (pids.length) buckets.push({ label: \`\${s.title} (¶\${s.startPid}–\${s.endPid})\`, pids });
+      }
+      const reviewPid = (structure.paragraphs[structure.paragraphs.length - 1]?.pid || 0) + 1;
+      if (includeReview) buckets.push({ label: "Review (box)", pids: [reviewPid] });
+      const paraMap = new Map(structure.paragraphs.map(p => [p.pid, p]));
+      function weightOf(pid) {
+        const p = paraMap.get(pid);
+        if (!p) return 1;
+        let w = 1;
+        if (p.hasRead) w += readBonus;
+        if (p.hasPicture) w += pictureBonus;
+        return w;
+      }
+      const totalWeight = buckets.reduce((sum, b) => sum + b.pids.reduce((s, pid) => s + weightOf(pid), 0), 0);
+      const secondsPerWeight = totalWeight > 0 ? pool / totalWeight : 0;
+      const milestones = [];
+      let t = introSeconds;
+      milestones.push({ key: "intro", label: "Intro ends", endBySeconds: t });
+      for (const b of buckets) {
+        const bucketSeconds = b.pids.reduce((s, pid) => s + weightOf(pid) * secondsPerWeight, 0);
+        t += bucketSeconds;
+        milestones.push({ key: b.label, label: b.label, endBySeconds: t });
+      }
+      milestones.push({ key: "conclusion", label: "Conclusion ends", endBySeconds: totalSeconds });
+      return { milestones, structure };
+    }
+
+    function formatTime(totalSeconds) {
+      totalSeconds = Math.round(totalSeconds);
+      const m = Math.floor(totalSeconds / 60).toString();
+      const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+      return m + ":" + s;
+    }
+    function escapeHtml(str) {
+      return (str ?? "").toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
   </script>
 </body>
 </html>
