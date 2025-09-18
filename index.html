@@ -2,47 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JW.org Mnemonic Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pub Finder Util</title>
+  <!-- Tool: Pub Finder Util -->
   <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
-    label, select, input, button { display: block; width: 100%; margin-bottom: .5em; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: #333;
+    }
+    select, input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #667eea;
+      color: #fff;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #5a67d8;
+    }
+    #msg {
+      color: red;
+      height: 1.25rem;
+    }
+    #qr-container {
+      margin-top: 1rem;
+      display: none;
+    }
+    #qr-code {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      button, select, input {
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Find JW Publication</h1>
+  <div class="container">
+    <h1>Pub Finder Util</h1>
+    <select id="lang">
+      <option value="En">English</option>
+      <option value="ASE">ASL</option>
+    </select>
+    <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
+    <div id="msg"></div>
+    <button id="go-btn">Go to Publication</button>
+    <button id="qr-btn">Display QR Code</button>
+    <button id="share-btn">Share Link</button>
+    <div id="qr-container">
+      <canvas id="qr-code"></canvas>
+    </div>
+  </div>
 
-  <label for="lang">Language:</label>
-  <select id="lang">
-    <option value="En">English</option>
-    <option value="ASE">ASL</option>
-  </select>
-
-  <label for="mnemonic">Mnemonic (pub code):</label>
-  <input id="mnemonic" placeholder="e.g. lff" autofocus>
-
-  <button id="go">Go</button>
-  <p id="msg" style="color: red;"></p>
-
+  <!-- QRious library for QR code generation -->
+  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qr.min.js"></script>
   <script>
-    // Optional: map friendly names to pub codes if needed
     const mapping = {
-      lff: 'lff',         // Enjoy Life Forever
-      lb:  'lb',          // brochures
-      tract: 'tract',     // tracts
-      mag: 'mag',         // magazines
-      // add more as needed…
+      // Extend with additional mnemonics if needed
+      lff: 'lff',
+      lb: 'lb',
+      tract: 'tract',
+      mag: 'mag'
     };
 
-    document.getElementById('go').onclick = () => {
-      const pub = document.getElementById('mnemonic').value.trim().toLowerCase();
-      if (!mapping[pub]) {
-        document.getElementById('msg').textContent = `Unknown mnemonic “${pub}.”`;
-        return;
+    const langEl = document.getElementById('lang');
+    const mnemonicEl = document.getElementById('mnemonic');
+    const msgEl = document.getElementById('msg');
+    const goBtn = document.getElementById('go-btn');
+    const qrBtn = document.getElementById('qr-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const qrContainer = document.getElementById('qr-container');
+    const qrCanvas = document.getElementById('qr-code');
+
+    function buildUrl() {
+      const pub = mnemonicEl.value.trim().toLowerCase();
+      if (!pub || !mapping[pub]) {
+        msgEl.textContent = `Unknown mnemonic “${pub}.”`;
+        return null;
       }
-      const lang = document.getElementById('lang').value;
-      const url = `https://www.jw.org/finder?wtlocale=${lang}&pub=${encodeURIComponent(mapping[pub])}`;
-      window.location.href = url;
-    };
+      msgEl.textContent = '';
+      const locale = langEl.value;
+      return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(mapping[pub])}`;
+    }
+
+    goBtn.addEventListener('click', () => {
+      const url = buildUrl();
+      if (url) window.location.href = url;
+    });
+
+    qrBtn.addEventListener('click', () => {
+      const url = buildUrl();
+      if (!url) return;
+      qrContainer.style.display = 'block';
+      const qr = new QRious({
+        element: qrCanvas,
+        value: url,
+        size: 150
+      });
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      const url = buildUrl();
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        msgEl.textContent = 'Link copied to clipboard!';
+      } catch (e) {
+        msgEl.textContent = 'Failed to copy link.';
+      }
+    });
   </script>
 </body>
 </html>
