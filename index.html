@@ -5,37 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pub Finder Util</title>
   <style>
-    body { margin:0; padding:0; font-family:Arial, sans-serif; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; min-height:100vh; }
-    .container { background:rgba(255,255,255,0.95); border-radius:16px; padding:2rem; max-width:540px; width:90%; box-shadow:0 8px 16px rgba(0,0,0,0.2); text-align:center; }
-    h1 { margin:0 0 1rem; font-size:1.6rem; color:#333; }
+    :root{
+      --card-bg: rgba(255,255,255,0.95);
+      --text:#1f2937; --muted:#6b7280;
+      --primary:#667eea; --primary-hover:#5a67d8;
+      --btn-text:#ffffff; --field-border:#d1d5db;
+      --grad1:#667eea; --grad2:#764ba2;
+    }
+    body.dark{
+      --card-bg: rgba(17,24,39,0.9);
+      --text:#f3f4f6; --muted:#9ca3af;
+      --primary:#8b5cf6; --primary-hover:#7c3aed;
+      --btn-text:#f9fafb; --field-border:#374151;
+      --grad1:#0f172a; --grad2:#383a83;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:0;font-family:Arial, sans-serif;
+      background:linear-gradient(135deg,var(--grad1),var(--grad2));
+      display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--text)}
+    .container{background:var(--card-bg);border-radius:16px;padding:2rem;max-width:620px;width:92%;
+      box-shadow:0 8px 16px rgba(0,0,0,.25);position:relative}
+    h1{margin:0 0 1rem;font-size:1.6rem}
 
-    .radio-group, .mode-group { display:flex; justify-content:space-around; margin-bottom:1rem; }
-    label { font-size:1rem; color:#333; }
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+    .theme-toggle{background:transparent;border:1px solid var(--field-border);
+      border-radius:999px;padding:.4rem .7rem;cursor:pointer;color:var(--text)}
 
-    .input-wrap { display:flex; justify-content:center; }
-    input[type="text"]{ width:60%; min-width:220px; max-width:360px; padding:.75rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:8px; font-size:1rem; }
+    .radio-group{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem}
+    .radio-group label{font-size:1rem}
 
-    /* Default buttons (Find, New Search) */
-    button { width:100%; padding:.75rem; margin-bottom:1rem; border:none; cursor:pointer; background-color:#667eea; color:#fff; border-radius:8px; font-size:1rem; transition:background-color .3s ease; }
-    button:hover { background-color:#5a67d8; }
+    .mode-group{display:flex;justify-content:flex-start;margin:.25rem 0 12px}
+    .mode-btn{padding:.6rem .9rem;border-radius:999px;border:1px solid var(--field-border);
+      background:#1f2937;color:#fff;cursor:pointer;font-weight:600}
+    body.dark .mode-btn{background:#111827;color:#fff;border-color:#374151}
 
-    /* Outcome buttons row */
-    .outcome-row { display:flex; gap:.5rem; justify-content:center; align-items:center; margin-bottom:.5rem; }
-    .icon-btn { width:auto; padding:.45rem .6rem; margin:0; background:#f8fafc; color:#333; border:1px solid #d1d5db; border-radius:8px; font-size:1.1rem; line-height:1; }
-    .icon-btn:hover { background:#eef2ff; border-color:#667eea; }
+    .input-wrap{display:flex;justify-content:center}
+    #searchInput{width:60%;min-width:260px;max-width:420px;padding:.75rem;margin-bottom:1rem;
+      border:1px solid var(--field-border);border-radius:8px;font-size:1rem;background:transparent;color:var(--text)}
 
-    #msg { color:red; min-height:1.25rem; }
-    #qr-container { margin-top:1rem; display:none; }
-    #qr-code { width:150px; height:150px; margin:0 auto; }
-    #new-search { margin-top:8px; background-color:#6b7280; width:auto; padding:.5rem .8rem; }
-    #new-search:hover { background-color:#4b5563; }
+    .primary{width:100%;padding:.75rem;margin-bottom:1rem;border:none;cursor:pointer;
+      background-color:var(--primary);color:var(--btn-text);border-radius:8px;font-size:1rem;transition:background-color .25s}
+    .primary:hover{background-color:var(--primary-hover)}
 
-    @media (max-width:600px){ .container{padding:1rem;} h1{font-size:1.25rem;} input[type="text"]{ width:100%; } button,input{font-size:.9rem;} }
+    #msg{color:#ef4444;min-height:1.25rem}
+    #qr-container{margin-top:1rem;display:none}
+    #qr-code{width:150px;height:150px;margin:0 auto;display:block}
+
+    .actions{display:grid;gap:.5rem}
+    .footer-actions{display:flex;justify-content:flex-end;margin-top:.25rem}
+    #new-search{width:auto;padding:.5rem .8rem;border:none;cursor:pointer;background-color:#6b7280;color:#fff;border-radius:8px;font-size:.9rem}
+    #new-search:hover{background-color:#4b5563}
+
+    @media (max-width:640px){
+      .container{padding:1.25rem}
+      h1{font-size:1.25rem}
+      #searchInput{width:100%}
+      .radio-group{justify-content:space-between}
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Pub Finder Util</h1>
+    <div class="topbar">
+      <h1>Pub Finder Util</h1>
+      <button id="theme-toggle" class="theme-toggle" aria-pressed="false" title="Toggle theme">🌙 Dark</button>
+    </div>
 
     <!-- Language -->
     <div class="radio-group" aria-label="Language">
@@ -43,9 +77,9 @@
       <label><input type="radio" name="lang" value="ase"> ASL</label>
     </div>
 
-    <!-- Mode toggle -->
+    <!-- Mode toggle (single button) -->
     <div class="mode-group" aria-label="Search type">
-      <button id="mode-toggle" aria-pressed="false">Mode: Publication</button>
+      <button id="mode-toggle" class="mode-btn" aria-pressed="false">Mode: Publication</button>
     </div>
 
     <!-- Single Search Input -->
@@ -54,18 +88,16 @@
     </div>
 
     <div id="msg"></div>
-    <button id="find-btn">Find</button>
+    <button id="find-btn" class="primary">Find</button>
 
-    <div id="extra-buttons" style="display:none;">
-      <div class="outcome-row">
-        <button id="toc-btn" class="icon-btn" title="Table of Contents" aria-label="Table of Contents">📑</button>
-        <button id="qr-btn" class="icon-btn" title="QR Code" aria-label="QR Code">🔳</button>
-        <button id="share-btn" class="icon-btn" title="Share Link" aria-label="Share Link">🔗</button>
-      </div>
+    <div id="extra-buttons" class="actions" style="display:none;">
+      <button id="toc-btn" class="primary">Table of Contents</button>
+      <button id="qr-btn" class="primary">QR Code</button>
+      <button id="share-btn" class="primary">Share Link</button>
       <div id="qr-container"><canvas id="qr-code"></canvas></div>
-      <button id="new-search" style="display:none;">New Search</button>
-    </div>
-      <button id="new-search" style="display:none;">New Search</button>
+      <div class="footer-actions">
+        <button id="new-search" style="display:none;">New Search</button>
+      </div>
     </div>
   </div>
 
@@ -83,16 +115,122 @@
 
     const searchInput = document.getElementById('searchInput');
     const modeToggleBtn = document.getElementById('mode-toggle');
+    const themeToggleBtn = document.getElementById('theme-toggle');
 
     let currentUrl = null;
-    let mode = 'pub';
+    let mode = 'pub'; // 'pub' | 'bible'
+
+    // THEME
+    function applyTheme(t){
+      document.body.classList.toggle('dark', t==='dark');
+      themeToggleBtn.textContent = t==='dark' ? '☀️ Light' : '🌙 Dark';
+      themeToggleBtn.setAttribute('aria-pressed', String(t==='dark'));
+      localStorage.setItem('pfu_theme', t);
+    }
+    const savedTheme = localStorage.getItem('pfu_theme') || 'light';
+    applyTheme(savedTheme);
+    themeToggleBtn.addEventListener('click', ()=>{
+      const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+      applyTheme(next);
+    });
 
     function getSelectedLanguage(){
       const radios = document.querySelectorAll('input[name="lang"]');
-      for (const r of radios) if (r.checked) return r.value; return 'en';
+      for (const r of radios) if (r.checked) return (r.value||'').trim();
+      return 'en';
     }
 
     function pad2(n){ return String(n).padStart(2,'0'); }
+    function pad3(n){ return String(n).padStart(3,'0'); }
+
+    // Bible book codes (comprehensive keys)
+    const BOOK_CODES = {
+      'genesis':'010','gen':'010','ge':'010','gn':'010',
+      'exodus':'020','exo':'020','ex':'020',
+      'leviticus':'030','lev':'030','le':'030',
+      'numbers':'040','num':'040','nu':'040','nm':'040',
+      'deuteronomy':'050','deut':'050','dt':'050','de':'050',
+      'joshua':'060','jos':'060','jo':'060',
+      'judges':'070','judg':'070','jdg':'070','jg':'070',
+      'ruth':'080','ru':'080',
+      '1 samuel':'090','1sam':'090','1 sa':'090','1sm':'090','i samuel':'090','1samuel':'090',
+      '2 samuel':'100','2sam':'100','2 sa':'100','2sm':'100','ii samuel':'100','2samuel':'100',
+      '1 kings':'110','1ki':'110','1kgs':'110','i kings':'110','1kings':'110',
+      '2 kings':'120','2ki':'120','2kgs':'120','ii kings':'120','2kings':'120',
+      '1 chronicles':'130','1ch':'130','i chronicles':'130','1chronicles':'130',
+      '2 chronicles':'140','2ch':'140','ii chronicles':'140','2chronicles':'140',
+      'ezra':'150','ezr':'150',
+      'nehemiah':'160','neh':'160',
+      'esther':'170','est':'170','es':'170',
+      'job':'180','jb':'180',
+      'psalms':'190','psalm':'190','ps':'190','psa':'190',
+      'proverbs':'200','prov':'200','pr':'200','prv':'200',
+      'ecclesiastes':'210','eccl':'210','ecc':'210','ec':'210',
+      'song of solomon':'220','song of songs':'220','song':'220','sos':'220','canticles':'220','cant':'220',
+      'isaiah':'230','isa':'230','is':'230',
+      'jeremiah':'240','jer':'240','je':'240',
+      'lamentations':'250','lam':'250','la':'250',
+      'ezekiel':'260','ezek':'260','eze':'260','ez':'260',
+      'daniel':'270','dan':'270','da':'270',
+      'hosea':'280','hos':'280','ho':'280',
+      'joel':'290','joe':'290','jl':'290',
+      'amos':'300','am':'300',
+      'obadiah':'310','obad':'310','ob':'310',
+      'jonah':'320','jon':'320','jh':'320',
+      'micah':'330','mic':'330','mi':'330',
+      'nahum':'340','nah':'340','na':'340',
+      'habakkuk':'350','hab':'350','hb':'350',
+      'zephaniah':'360','zeph':'360','zep':'360','zp':'360',
+      'haggai':'370','hag':'370','hg':'370',
+      'zechariah':'380','zech':'380','zec':'380','zc':'380',
+      'malachi':'390','mal':'390','ml':'390',
+      'matthew':'400','matt':'400','mt':'400',
+      'mark':'410','mk':'410',
+      'luke':'420','lk':'420','lu':'420',
+      'john':'430','jn':'430','joh':'430',
+      'acts':'440','ac':'440',
+      'romans':'450','rom':'450','ro':'450',
+      '1 corinthians':'460','1cor':'460','i corinthians':'460','1 cor':'460','1corinthians':'460',
+      '2 corinthians':'470','2cor':'470','ii corinthians':'470','2 cor':'470','2corinthians':'470',
+      'galatians':'480','gal':'480','ga':'480',
+      'ephesians':'490','eph':'490','ep':'490',
+      'philippians':'500','phil':'500','php':'500','ph':'500',
+      'colossians':'510','col':'510','co':'510',
+      '1 thessalonians':'520','1thess':'520','1 th':'520','i thessalonians':'520','1thessalonians':'520',
+      '2 thessalonians':'530','2thess':'530','2 th':'530','ii thessalonians':'530','2thessalonians':'530',
+      '1 timothy':'540','1tim':'540','i timothy':'540','1 tim':'540','1timothy':'540',
+      '2 timothy':'550','2tim':'550','ii timothy':'550','2 tim':'550','2timothy':'550',
+      'titus':'560','tit':'560',
+      'philemon':'570','philem':'570','phm':'570','pm':'570',
+      'hebrews':'580','heb':'580','hb':'580',
+      'james':'590','jas':'590','jm':'590',
+      '1 peter':'600','1pet':'600','i peter':'600','1 pe':'600','1peter':'600',
+      '2 peter':'610','2pet':'610','ii peter':'610','2 pe':'610','2peter':'610',
+      '1 john':'620','1jn':'620','i john':'620','1 jn':'620','1john':'620',
+      '2 john':'630','2jn':'630','ii john':'630','2 jn':'630','2john':'630',
+      '3 john':'640','3jn':'640','iii john':'640','3 jn':'640','3john':'640',
+      'jude':'650','jud':'650','jd':'650',
+      'revelation':'660','rev':'660','re':'660','apocalypse':'660'
+    };
+
+    function parseBibleRef(input){
+      const s = input.trim().replace(/\s+/g,' ');
+      const m = /^([1-3]?\s?[A-Za-z ]+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i.exec(s);
+      if(!m) return null;
+      const bookKey = m[1].toLowerCase().trim();
+      const bookCode = BOOK_CODES[bookKey];
+      if(!bookCode) return null;
+      const chap = parseInt(m[2],10);
+      const v1 = m[3] ? parseInt(m[3],10) : null;
+      const v2 = m[4] ? parseInt(m[4],10) : null;
+      const left = bookCode + pad2(chap) + pad3(v1 ?? 0);
+      if(v1===null){ return left; }
+      if(v2){
+        const right = bookCode + pad2(chap) + pad3(v2);
+        return left + '-' + right;
+      }
+      return left;
+    }
 
     function parsePeriodical(input){
       const s = input.trim();
@@ -116,58 +254,6 @@
       return null;
     }
 
-    const bibleBookMap = {
-      "matthew": "400", "mark": "410", "luke": "420", "john": "430", "acts": "440"
-      // extend as needed
-    };
-
-    function parseBibleRef(input){
-      const s = input.trim();
-      const m = /^(\w+)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i.exec(s);
-      if (!m) return null;
-      const book = bibleBookMap[m[1].toLowerCase()];
-      if (!book) return null;
-      const chapter = pad2(parseInt(m[2],10));
-      if (!m[3]) return `${book}${chapter}00`;
-      const v1 = pad2(parseInt(m[3],10));
-      if (m[4]){
-        const v2 = pad2(parseInt(m[4],10));
-        return `${book}${chapter}${v1}-${book}${chapter}${v2}`;
-      }
-      return `${book}${chapter}${v1}`;
-    }
-
-    function buildUrl(){
-      const wtlocale = getSelectedLanguage();
-      const raw = (searchInput.value || '').trim();
-      if (!raw){ msgEl.textContent = 'Please enter a value.'; return null; }
-
-      if (mode === 'bible'){
-        const bibleCode = parseBibleRef(raw);
-        if (!bibleCode){ msgEl.textContent = 'Enter a valid Bible citation (e.g., Matthew 6:33 or Matthew 6:33-34 or Matthew 6).'; return null; }
-        msgEl.textContent = '';
-        return `https://www.jw.org/finder?wtlocale=${wtlocale}&bible=${bibleCode}`;
-      }
-
-      const per = parsePeriodical(raw);
-      if (per){
-        msgEl.textContent = '';
-        return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(per.pub)}&issue=${encodeURIComponent(per.issue)}`;
-      }
-      msgEl.textContent = '';
-      return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(raw)}`;
-    }
-
-    function doSearch(){
-      const url = buildUrl();
-      if (!url) return;
-      currentUrl = url;
-      extraButtons.style.display = 'block';
-      findBtn.style.display = 'none';
-      newSearchBtn.style.display = 'block';
-      qrContainer.style.display = 'none';
-    }
-
     function updateModeUI(){
       const pubActive = mode === 'pub';
       modeToggleBtn.textContent = pubActive ? 'Mode: Publication' : 'Mode: Bible citation';
@@ -175,34 +261,64 @@
       searchInput.placeholder = pubActive ? 'e.g. lff • w14 8/15 • w16.01' : 'e.g. Matthew 6:33 • Matthew 6 • 1 Peter 3:1-5';
       msgEl.textContent = '';
     }
-
     modeToggleBtn.addEventListener('click', ()=>{ mode = (mode === 'pub') ? 'bible' : 'pub'; updateModeUI(); });
     updateModeUI();
+
+    function buildUrl(){
+      const wtlocale = getSelectedLanguage();
+      const raw = (searchInput.value||'').trim();
+      if(!raw){ msgEl.textContent='Please enter a value.'; return null; }
+
+      if(mode==='bible'){
+        const code = parseBibleRef(raw);
+        if(!code){ msgEl.textContent='Enter a valid Bible citation (e.g., Matthew 6:33 or Matthew 6:33-34 or Matthew 6).'; return null; }
+        msgEl.textContent='';
+        return `https://www.jw.org/finder?wtlocale=${wtlocale}&bible=${code}`;
+      }
+
+      const per = parsePeriodical(raw);
+      if(per){ msgEl.textContent=''; return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(per.pub)}&issue=${encodeURIComponent(per.issue)}`; }
+
+      msgEl.textContent='';
+      return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(raw)}`;
+    }
+
+    function doSearch(){
+      const url = buildUrl();
+      if(!url) return;
+      currentUrl = url;
+      document.querySelector('.mode-group').style.display = 'none'; // hide mode button on search
+      extraButtons.style.display='grid';
+      findBtn.style.display='none';
+      newSearchBtn.style.display='inline-block';
+      qrContainer.style.display='none';
+    }
 
     findBtn.addEventListener('click', doSearch);
     searchInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
 
-    tocBtn.addEventListener('click', ()=>{ if (currentUrl) window.location.href = currentUrl; });
+    tocBtn.addEventListener('click', ()=>{ if(currentUrl) window.location.href=currentUrl; });
 
     qrBtn.addEventListener('click', ()=>{
-      if (!currentUrl) return;
-      qrContainer.style.display = 'block';
+      if(!currentUrl) return;
+      qrContainer.style.display='block';
       new QRious({ element: qrCanvas, value: currentUrl, size: 150 });
     });
 
     shareBtn.addEventListener('click', async ()=>{
-      if (!currentUrl) return;
+      if(!currentUrl) return;
       try{
         await navigator.clipboard.writeText(currentUrl);
-        msgEl.style.color = '#16a34a';
-        msgEl.textContent = 'Link copied to clipboard!';
-        setTimeout(()=>{ msgEl.textContent=''; msgEl.style.color='red'; }, 1800);
-      }catch{ msgEl.textContent = 'Failed to copy link.'; }
+        msgEl.style.color='#10b981';
+        msgEl.textContent='Link copied to clipboard!';
+        setTimeout(()=>{ msgEl.textContent=''; msgEl.style.color='#ef4444'; }, 1800);
+      }catch{ msgEl.textContent='Failed to copy link.'; }
     });
 
     newSearchBtn.addEventListener('click', ()=>{
-      searchInput.value='';
-      currentUrl = null; extraButtons.style.display='none'; findBtn.style.display='block'; msgEl.textContent=''; qrContainer.style.display='none';
+      searchInput.value=''; currentUrl=null; extraButtons.style.display='none'; findBtn.style.display='block'; msgEl.textContent=''; qrContainer.style.display='none';
+      document.querySelector('.mode-group').style.display = 'flex'; // show mode button again
+      searchInput.focus();
     });
   </script>
 </body>
