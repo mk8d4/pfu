@@ -29,13 +29,22 @@
       font-size: 1.6rem;
       color: #333;
     }
-    input, button, datalist {
+    input[type="text"], button {
       width: 100%;
       padding: 0.75rem;
       margin-bottom: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 1rem;
+    }
+    .radio-group {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+    }
+    .radio-group label {
+      font-size: 1rem;
+      color: #333;
     }
     button {
       border: none;
@@ -77,11 +86,10 @@
   <div class="container">
     <h1>Pub Finder Util</h1>
 
-    <input id="lang" list="languages" placeholder="Enter language (en or ase)" value="en">
-    <datalist id="languages">
-      <option value="en">English</option>
-      <option value="ase">American Sign Language</option>
-    </datalist>
+    <div class="radio-group">
+      <label><input type="radio" name="lang" value="en" checked> English</label>
+      <label><input type="radio" name="lang" value="ase"> ASL</label>
+    </div>
 
     <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
     <div id="msg"></div>
@@ -108,7 +116,6 @@
       nwtsty: 'nwtsty'
     };
 
-    const langEl = document.getElementById('lang');
     const mnemonicEl = document.getElementById('mnemonic');
     const msgEl = document.getElementById('msg');
     const searchBtn = document.getElementById('search-btn');
@@ -120,6 +127,14 @@
     const qrCanvas = document.getElementById('qr-code');
     let currentUrl = null;
 
+    function getSelectedLanguage() {
+      const radios = document.querySelectorAll('input[name="lang"]');
+      for (const radio of radios) {
+        if (radio.checked) return radio.value;
+      }
+      return 'en';
+    }
+
     function buildUrl() {
       const pub = mnemonicEl.value.trim().toLowerCase();
       if (!pub || !mapping[pub]) {
@@ -127,7 +142,7 @@
         return null;
       }
       msgEl.textContent = '';
-      const locale = langEl.value.trim().toLowerCase() || 'en';
+      const locale = getSelectedLanguage();
       return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(mapping[pub])}`;
     }
 
