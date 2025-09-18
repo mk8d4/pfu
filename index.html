@@ -5,93 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pub Finder Util</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 480px;
-      width: 90%;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 1.6rem;
-      color: #333;
-    }
-    .radio-group {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 1rem;
-    }
-    .radio-group label { font-size: 1rem; color: #333; }
+    body { margin:0; padding:0; font-family:Arial, sans-serif; background:linear-gradient(135deg,#667eea,#764ba2); display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .container { background:rgba(255,255,255,0.95); border-radius:16px; padding:2rem; max-width:540px; width:90%; box-shadow:0 8px 16px rgba(0,0,0,0.2); text-align:center; }
+    h1 { margin:0 0 1rem; font-size:1.6rem; color:#333; }
 
-    /* Input centered and half width on desktop */
-    .input-wrap { display: flex; justify-content: center; }
-    #mnemonic {
-      width: 50%;
-      min-width: 220px;
-      max-width: 320px;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
+    .radio-group, .mode-group { display:flex; justify-content:space-around; margin-bottom:1rem; }
+    label { font-size:1rem; color:#333; }
 
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: none;
-      cursor: pointer;
-      background-color: #667eea;
-      color: #fff;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-    }
-    button:hover { background-color: #5a67d8; }
+    .input-wrap { display:flex; justify-content:center; }
+    input[type="text"]{ width:60%; min-width:220px; max-width:360px; padding:.75rem; margin-bottom:1rem; border:1px solid #ccc; border-radius:8px; font-size:1rem; }
 
-    #msg { color: red; min-height: 1.25rem; }
+    button { width:100%; padding:.75rem; margin-bottom:1rem; border:none; cursor:pointer; background-color:#667eea; color:#fff; border-radius:8px; font-size:1rem; transition:background-color .3s ease; }
+    button:hover { background-color:#5a67d8; }
 
-    #qr-container { margin-top: 1rem; display: none; }
-    #qr-code { width: 150px; height: 150px; margin: 0 auto; }
+    #msg { color:red; min-height:1.25rem; }
+    #qr-container { margin-top:1rem; display:none; }
+    #qr-code { width:150px; height:150px; margin:0 auto; }
+    #new-search { margin-top:8px; background-color:#6b7280; }
+    #new-search:hover { background-color:#4b5563; }
 
-    /* Place New Search slightly lower */
-    #new-search { margin-top: 8px; background-color: #6b7280; }
-    #new-search:hover { background-color: #4b5563; }
-
-    @media (max-width: 600px) {
-      .container { padding: 1rem; }
-      h1 { font-size: 1.25rem; }
-      #mnemonic { width: 100%; }
-      button, input { font-size: 0.9rem; }
-    }
+    @media (max-width:600px){ .container{padding:1rem;} h1{font-size:1.25rem;} input[type="text"]{ width:100%; } button,input{font-size:.9rem;} }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Pub Finder Util</h1>
 
-    <div class="radio-group">
+    <!-- Language -->
+    <div class="radio-group" aria-label="Language">
       <label><input type="radio" name="lang" value="en" checked> English</label>
       <label><input type="radio" name="lang" value="ase"> ASL</label>
     </div>
 
-    <div class="input-wrap">
-      <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
+    <!-- Mode selector -->
+    <div class="seg" role="tablist" aria-label="Search type">
+      <button id="mode-pub" class="active" aria-selected="true" role="tab">Publication</button>
+      <button id="mode-bible" aria-selected="false" role="tab">Bible citation</button>
     </div>
+
+    <!-- Single Search Input -->
+    <div class="input-wrap">
+      <input id="searchInput" type="text" placeholder="e.g. lff  •  w14 8/15  •  w16.01" autofocus>
+    </div>
+
     <div id="msg"></div>
     <button id="find-btn">Find</button>
 
@@ -99,17 +55,13 @@
       <button id="toc-btn">Table of Contents</button>
       <button id="qr-btn">QR Code</button>
       <button id="share-btn">Share Link</button>
-      <div id="qr-container">
-        <canvas id="qr-code"></canvas>
-      </div>
+      <div id="qr-container"><canvas id="qr-code"></canvas></div>
       <button id="new-search" style="display:none;">New Search</button>
     </div>
   </div>
 
-  <!-- QRious library for QR code generation -->
   <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
   <script>
-    const mnemonicEl = document.getElementById('mnemonic');
     const msgEl = document.getElementById('msg');
     const findBtn = document.getElementById('find-btn');
     const tocBtn = document.getElementById('toc-btn');
@@ -119,67 +71,136 @@
     const extraButtons = document.getElementById('extra-buttons');
     const qrContainer = document.getElementById('qr-container');
     const qrCanvas = document.getElementById('qr-code');
-    let currentUrl = null;
-    let qrInstance = null;
 
-    function getSelectedLanguage() {
-      const radios = document.querySelectorAll('input[name="lang"]');
-      for (const radio of radios) if (radio.checked) return radio.value;
-      return 'en';
-    }
-
-    function buildUrl() {
-      const pub = mnemonicEl.value.trim();
-      if (!pub) { msgEl.textContent = 'Please enter a mnemonic.'; return null; }
+    const searchInput = document.getElementById('searchInput');
+    const modePubBtn = document.getElementById('mode-pub');
+    const modeBibleBtn = document.getElementById('mode-bible');
+    let mode = 'pub'; // default
+    function setMode(next){
+      mode = next;
+      const pubActive = next === 'pub';
+      modePubBtn.classList.toggle('active', pubActive);
+      modePubBtn.setAttribute('aria-selected', pubActive);
+      modeBibleBtn.classList.toggle('active', !pubActive);
+      modeBibleBtn.setAttribute('aria-selected', !pubActive);
+      searchInput.placeholder = pubActive ? 'e.g. lff  •  w14 8/15  •  w16.01' : 'e.g. Matthew 6:33  •  Matthew 6  •  1 Peter 3:1-5';
       msgEl.textContent = '';
-      const locale = getSelectedLanguage();
-      return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(pub)}`;
+    }
+    modePubBtn.addEventListener('click', ()=> setMode('pub'));
+    modeBibleBtn.addEventListener('click', ()=> setMode('bible'));
+
+    let currentUrl = null;
+
+    function getSelectedLanguage(){
+      const radios = document.querySelectorAll('input[name="lang"]');
+      for (const r of radios) if (r.checked) return r.value; return 'en';
+    }
+    function getSelectedMode(){
+      const radios = document.querySelectorAll('input[name="mode"]');
+      for (const r of radios) if (r.checked) return r.value; return 'pub';
     }
 
-    function doSearch() {
+    function pad2(n){ return String(n).padStart(2,'0'); }
+
+    function parsePeriodical(input){
+      const s = input.trim();
+      let m = /^([wg])(\d{2})\s+(\d{1,2})\/(\d{1,2})$/i.exec(s);
+      if (m){
+        const code = m[1].toLowerCase();
+        const yy = parseInt(m[2],10);
+        const month = pad2(parseInt(m[3],10));
+        const day = pad2(parseInt(m[4],10));
+        const year = 2000 + yy;
+        return { pub: code + pad2(yy), issue: `${year}${month}${day}` };
+      }
+      m = /^([wg])(\d{2})\.(\d{2})$/i.exec(s);
+      if (m){
+        const code = m[1].toLowerCase();
+        const yy = parseInt(m[2],10);
+        const mm = pad2(parseInt(m[3],10));
+        const year = 2000 + yy;
+        return { pub: code + pad2(yy), issue: `${year}${mm}` };
+      }
+      return null;
+    }
+
+    const bibleBookMap = {
+      "matthew": "400", "mark": "410", "luke": "420", "john": "430", "acts": "440"
+      // extend as needed
+    };
+
+    function parseBibleRef(input){
+      const s = input.trim();
+      const m = /^(\w+)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i.exec(s);
+      if (!m) return null;
+      const book = bibleBookMap[m[1].toLowerCase()];
+      if (!book) return null;
+      const chapter = pad2(parseInt(m[2],10));
+      if (!m[3]) return `${book}${chapter}00`;
+      const v1 = pad2(parseInt(m[3],10));
+      if (m[4]){
+        const v2 = pad2(parseInt(m[4],10));
+        return `${book}${chapter}${v1}-${book}${chapter}${v2}`;
+      }
+      return `${book}${chapter}${v1}`;
+    }
+
+    function buildUrl(){
+      const wtlocale = getSelectedLanguage();
+      const raw = (searchInput.value || '').trim();
+      if (!raw){ msgEl.textContent = 'Please enter a value.'; return null; }
+
+      if (mode === 'bible'){
+        const bibleCode = parseBibleRef(raw);
+        if (!bibleCode){ msgEl.textContent = 'Enter a valid Bible citation (e.g., Matthew 6:33 or Matthew 6:33-34 or Matthew 6).'; return null; }
+        msgEl.textContent = '';
+        return `https://www.jw.org/finder?wtlocale=${wtlocale}&bible=${bibleCode}`;
+      }
+
+      // Publication mode: periodicals or plain mnemonic
+      const per = parsePeriodical(raw);
+      if (per){
+        msgEl.textContent = '';
+        return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(per.pub)}&issue=${encodeURIComponent(per.issue)}`;
+      }
+      msgEl.textContent = '';
+      return `https://www.jw.org/finder?wtlocale=${wtlocale}&pub=${encodeURIComponent(raw)}`;
+    }
+
+    function doSearch(){
       const url = buildUrl();
       if (!url) return;
       currentUrl = url;
       extraButtons.style.display = 'block';
       findBtn.style.display = 'none';
       newSearchBtn.style.display = 'block';
-      // reset QR each search
       qrContainer.style.display = 'none';
-      if (qrInstance) { qrInstance = null; qrCanvas.getContext && qrCanvas.getContext('2d')?.clearRect(0,0,qrCanvas.width,qrCanvas.height); }
     }
 
     findBtn.addEventListener('click', doSearch);
-    mnemonicEl.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doSearch(); });
+    searchInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
 
-    tocBtn.addEventListener('click', () => { if (currentUrl) window.location.href = currentUrl; });
+    tocBtn.addEventListener('click', ()=>{ if (currentUrl) window.location.href = currentUrl; });
 
-    qrBtn.addEventListener('click', () => {
+    qrBtn.addEventListener('click', ()=>{
       if (!currentUrl) return;
       qrContainer.style.display = 'block';
-      // Recreate QR each time to ensure fresh value
-      const qr = new QRious({ element: qrCanvas, value: currentUrl, size: 150 });
-      qrInstance = qr;
+      new QRious({ element: qrCanvas, value: currentUrl, size: 150 });
     });
 
-    shareBtn.addEventListener('click', async () => {
+    shareBtn.addEventListener('click', async ()=>{
       if (!currentUrl) return;
-      try {
+      try{
         await navigator.clipboard.writeText(currentUrl);
         msgEl.style.color = '#16a34a';
         msgEl.textContent = 'Link copied to clipboard!';
         setTimeout(()=>{ msgEl.textContent=''; msgEl.style.color='red'; }, 1800);
-      } catch (e) {
-        msgEl.textContent = 'Failed to copy link.';
-      }
+      }catch{ msgEl.textContent = 'Failed to copy link.'; }
     });
 
-    newSearchBtn.addEventListener('click', () => {
-      mnemonicEl.value = '';
-      currentUrl = null;
-      extraButtons.style.display = 'none';
-      findBtn.style.display = 'block';
-      msgEl.textContent = '';
-      qrContainer.style.display = 'none';
+    newSearchBtn.addEventListener('click', ()=>{
+      searchInput.value='';
+      currentUrl = null; extraButtons.style.display='none'; findBtn.style.display='block'; msgEl.textContent=''; qrContainer.style.display='none';
     });
   </script>
 </body>
