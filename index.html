@@ -1,178 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pub Finder Util</title>
   <style>
-    :root{
-      --bg1:#6a11cb;--bg2:#2575fc;--card:rgba(255,255,255,.95);
-      --text:#1f2937;--muted:#6b7280;--accent:#2563eb;--accent2:#0ea5e9;--radius:16px;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{
-      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background:linear-gradient(135deg,var(--bg1),var(--bg2));
-      display:grid;place-items:center;padding:24px;
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      text-align: center;
     }
-    .card{
-      width:min(720px,92vw);background:var(--card);border-radius:var(--radius);
-      box-shadow:0 20px 40px rgba(0,0,0,.25);padding:clamp(16px,3vw,28px);
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.6rem;
+      color: #333;
     }
-    h1{margin:0 0 12px;font-size:clamp(20px,4vw,28px);color:var(--text);text-align:center}
-    p.sub{margin:0 0 24px;color:var(--muted);text-align:center}
-    .grid{display:grid;gap:12px;grid-template-columns:1fr 220px}
-    @media (max-width:640px){.grid{grid-template-columns:1fr}}
-    .field{display:grid;gap:8px}
-    label{font-weight:600;color:var(--text)}
-    input[type="text"]{
-      width:100%;padding:14px 16px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;font-size:16px;
-      outline:none;box-shadow:0 2px 0 rgba(0,0,0,.02) inset;
+    input, button, datalist {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
     }
-    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-    .actions{display:grid;gap:10px;grid-template-columns:1fr;margin-top:10px}
-    .btn{
-      border:0;border-radius:12px;padding:14px 16px;font-size:16px;font-weight:600;cursor:pointer;
-      background:var(--accent);color:#fff;transition:transform .05s ease,filter .2s ease;
+    button {
+      border: none;
+      cursor: pointer;
+      background-color: #667eea;
+      color: #fff;
+      transition: background-color 0.3s ease;
     }
-    .btn:hover{filter:brightness(.96)} .btn:active{transform:translateY(1px)}
-    .btn.secondary{background:var(--accent2)}
-    .hidden{display:none!important}
-    .msg{min-height:22px;color:#dc2626;font-weight:600;margin-top:4px}
-    .result{margin-top:14px;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
-    .qr-wrap{display:grid;place-items:center;margin-top:12px}
-    #qrcode{background:#fff;padding:8px;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.12)}
-    small.muted{color:var(--muted)}
+    button:hover {
+      background-color: #5a67d8;
+    }
+    #msg {
+      color: red;
+      height: 1.25rem;
+    }
+    #qr-container {
+      margin-top: 1rem;
+      display: none;
+    }
+    #qr-code {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      button, input {
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <main class="card" role="main">
+  <div class="container">
     <h1>Pub Finder Util</h1>
-    <p class="sub">Build a JW.org finder link from a language code and mnemonic.</p>
 
-    <div class="grid">
-      <div class="field">
-        <label for="langInput">Language (code or name)</label>
-        <input id="langInput" list="langList" type="text" placeholder="Start typing e.g. English, ASL, Spanish…" autocomplete="on" />
-        <datalist id="langList"></datalist>
-        <small class="muted">Defaults to English (<b>En</b>). Uses site language codes (e.g., <b>En</b>, <b>Ase</b>).</small>
-      </div>
-      <div class="field">
-        <label for="mnemonic">Mnemonic (pub)</label>
-        <input id="mnemonic" type="text" placeholder="e.g. lff, lfb, nwtsty" />
-      </div>
-    </div>
+    <input id="lang" list="languages" placeholder="Enter language (en or ase)" value="en">
+    <datalist id="languages">
+      <option value="en">English</option>
+      <option value="ase">American Sign Language</option>
+    </datalist>
 
-    <div class="actions">
-      <button id="searchBtn" class="btn">Search</button>
-      <div id="postActions" class="hidden">
-        <div class="actions">
-          <button id="goBtn" class="btn">Go to Publication</button>
-          <button id="qrBtn" class="btn secondary">Display QR Code</button>
-          <button id="shareBtn" class="btn secondary">Share Link</button>
-        </div>
+    <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
+    <div id="msg"></div>
+    <button id="search-btn">Search</button>
+
+    <div id="extra-buttons" style="display:none;">
+      <button id="go-btn">Go to Publication</button>
+      <button id="qr-btn">Display QR Code</button>
+      <button id="share-btn">Share Link</button>
+      <div id="qr-container">
+        <canvas id="qr-code"></canvas>
       </div>
     </div>
+  </div>
 
-    <div id="msg" class="msg" aria-live="polite"></div>
-    <div id="result" class="result hidden"></div>
-    <div id="qrSection" class="qr-wrap hidden"><div id="qrcode"></div></div>
-  </main>
-
-  <!-- Working QR generator -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- QRious library for QR code generation -->
+  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
   <script>
-    // Prepopulated list (extend as needed). Keys = names typed; values = site codes (case matters).
-    const LANGUAGE_MAP = {
-      "English":"En","ASL":"Ase","Spanish":"Es","German":"De","French":"Fr","Portuguese":"Pt","Italian":"It",
-      "Japanese":"Ja","Korean":"Ko","Chinese (Mandarin, Trad)":"Ch","Chinese (Cantonese, Trad)":"Chc",
-      "Arabic":"A","Polish":"Pl","Russian":"Ru"
+    const mapping = {
+      lff: 'lff',
+      lb: 'lb',
+      tract: 'tract',
+      mag: 'mag',
+      nwtsty: 'nwtsty'
     };
 
-    // Build datalist options (shows names; label hints at code in some UIs)
-    const langList = document.getElementById("langList");
-    Object.keys(LANGUAGE_MAP).sort().forEach(name=>{
-      const opt=document.createElement("option");
-      opt.value=name; opt.label=LANGUAGE_MAP[name];
-      langList.appendChild(opt);
-    });
+    const langEl = document.getElementById('lang');
+    const mnemonicEl = document.getElementById('mnemonic');
+    const msgEl = document.getElementById('msg');
+    const searchBtn = document.getElementById('search-btn');
+    const goBtn = document.getElementById('go-btn');
+    const qrBtn = document.getElementById('qr-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const extraButtons = document.getElementById('extra-buttons');
+    const qrContainer = document.getElementById('qr-container');
+    const qrCanvas = document.getElementById('qr-code');
+    let currentUrl = null;
 
-    const langInput = document.getElementById("langInput");
-    const mnemonicInput = document.getElementById("mnemonic");
-    const msg = document.getElementById("msg");
-    const result = document.getElementById("result");
-    const postActions = document.getElementById("postActions");
-    const searchBtn = document.getElementById("searchBtn");
-    const goBtn = document.getElementById("goBtn");
-    const qrBtn = document.getElementById("qrBtn");
-    const shareBtn = document.getElementById("shareBtn");
-    const qrSection = document.getElementById("qrSection");
-    const qrNode = document.getElementById("qrcode");
-    let qrInstance = null;
-
-    // Default to English
-    langInput.value = "English";
-
-    function resolveLangCode(input){
-      if(!input) return "En";
-      const trimmed = input.trim();
-      if(LANGUAGE_MAP[trimmed]) return LANGUAGE_MAP[trimmed];     // name -> code
-      const maybeCode = trimmed.replace(/\\s+/g,'');               // typed a code directly
-      if(maybeCode.length>=1 && maybeCode.length<=4){
-        return maybeCode.charAt(0).toUpperCase()+maybeCode.slice(1).toLowerCase();
+    function buildUrl() {
+      const pub = mnemonicEl.value.trim().toLowerCase();
+      if (!pub || !mapping[pub]) {
+        msgEl.textContent = `Unknown mnemonic “${pub}.”`;
+        return null;
       }
-      return "En";
+      msgEl.textContent = '';
+      const locale = langEl.value.trim().toLowerCase() || 'en';
+      return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(mapping[pub])}`;
     }
 
-    function buildUrl(){
-      const pub = (mnemonicInput.value||"").trim();
-      if(!pub){ msg.textContent="Please enter a mnemonic (e.g., lff, lfb, nwtsty)."; return null; }
-      const wtlocale = resolveLangCode(langInput.value);
-      const url = `https://www.jw.org/finder?wtlocale=${encodeURIComponent(wtlocale)}&pub=${encodeURIComponent(pub)}`;
-      msg.textContent = "";
-      result.textContent = url;
-      result.classList.remove("hidden");
-      return url;
-    }
-
-    function revealPostActions(){ postActions.classList.remove("hidden"); }
-
-    searchBtn.addEventListener("click", ()=>{
+    searchBtn.addEventListener('click', () => {
       const url = buildUrl();
-      if(!url) return;
-      revealPostActions();
-      qrSection.classList.add("hidden");
-      if(qrInstance){ qrNode.innerHTML=""; qrInstance=null; }
+      if (url) {
+        currentUrl = url;
+        extraButtons.style.display = 'block';
+      }
     });
 
-    goBtn.addEventListener("click", ()=>{
-      const url = buildUrl();
-      if(url) window.location.href = url;
+    goBtn.addEventListener('click', () => {
+      if (currentUrl) window.location.href = currentUrl;
     });
 
-    qrBtn.addEventListener("click", ()=>{
-      const url = buildUrl();
-      if(!url) return;
-      qrNode.innerHTML="";
-      qrInstance = new QRCode(qrNode, { text:url, width:196, height:196, correctLevel: QRCode.CorrectLevel.M });
-      qrSection.classList.remove("hidden");
+    qrBtn.addEventListener('click', () => {
+      if (!currentUrl) return;
+      qrContainer.style.display = 'block';
+      new QRious({
+        element: qrCanvas,
+        value: currentUrl,
+        size: 150
+      });
     });
 
-    shareBtn.addEventListener("click", async ()=>{
-      const url = buildUrl();
-      if(!url) return;
-      try{
-        await navigator.clipboard.writeText(url);
-        msg.style.color = "#16a34a";
-        msg.textContent = "Link copied to clipboard!";
-        setTimeout(()=>{ msg.textContent=""; msg.style.color="#dc2626"; }, 1800);
-      }catch{ msg.textContent="Failed to copy link."; }
+    shareBtn.addEventListener('click', async () => {
+      if (!currentUrl) return;
+      try {
+        await navigator.clipboard.writeText(currentUrl);
+        msgEl.textContent = 'Link copied to clipboard!';
+      } catch (e) {
+        msgEl.textContent = 'Failed to copy link.';
+      }
     });
-
-    // Enter to Search
-    [langInput, mnemonicInput].forEach(el=>el.addEventListener("keydown", e=>{
-      if(e.key==="Enter") searchBtn.click();
-    }));
   </script>
 </body>
 </html>
