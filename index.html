@@ -1,312 +1,48 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>WTC – Watchtower Timing Calculator</title>
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <meta name="description" content="Calculate end-by times for a 60-minute Watchtower study discussion.">
+  <meta charset="UTF-8">
+  <title>JW.org Mnemonic Finder</title>
   <style>
-    /* Glassmorphism + monospace for times */
-    .glass { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
+    label, select, input, button { display: block; width: 100%; margin-bottom: .5em; }
   </style>
 </head>
-<body class="min-h-screen w-full bg-gradient-to-br from-rose-100 via-emerald-100 to-indigo-100 text-slate-900">
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <header class="mb-6">
-      <h1 class="text-3xl font-semibold tracking-tight">WTC</h1>
-      <p class="text-sm text-slate-700">Watchtower Timing Calculator</p>
-    </header>
+<body>
+  <h1>Find JW Publication</h1>
 
-    <section class="grid gap-4">
-      <div class="glass bg-white/50 rounded-2xl shadow p-4">
-        <label class="block text-sm font-medium mb-2">Article URL</label>
-        <div class="flex gap-2">
-          <input id="url" type="url" placeholder="https://www.jw.org/..."
-                 class="w-full rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300">
-          <button id="fetchBtn"
-                  class="rounded-xl px-4 py-2 bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50">
-            Fetch
-          </button>
-        </div>
-        <div class="mt-2 flex items-center gap-3">
-          <label class="inline-flex items-center gap-2 text-sm">
-            <input id="useCors" type="checkbox">
-            Use CORS helper (try this if fetch is blocked)
-          </label>
-          <button id="pasteBtn" class="text-sm underline underline-offset-2">Paste HTML instead</button>
-          <span id="status" class="text-sm text-rose-700"></span>
-        </div>
-      </div>
+  <label for="lang">Language:</label>
+  <select id="lang">
+    <option value="En">English</option>
+    <option value="ASE">ASL</option>
+  </select>
 
-      <div class="glass bg-white/40 rounded-2xl shadow p-4">
-        <h2 class="text-lg font-semibold mb-3">Settings</h2>
-        <div class="grid sm:grid-cols-3 gap-3">
-          <label class="text-sm grid gap-1">
-            <span>Total minutes</span>
-            <input id="totalMin" type="number" value="60" min="5" max="180" step="1"
-                   class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          </label>
-          <label class="text-sm grid gap-1">
-            <span>Intro (sec)</span>
-            <input id="introSec" type="number" value="90" min="0" max="600" step="1"
-                   class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          </label>
-          <label class="text-sm grid gap-1">
-            <span>Conclusion (sec)</span>
-            <input id="conclSec" type="number" value="90" min="0" max="600" step="1"
-                   class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          </label>
-          <label class="text-sm grid gap-1">
-            <span>READ bonus</span>
-            <input id="readBonus" type="number" value="0.2" min="0" max="2" step="0.1"
-                   class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          </label>
-          <label class="text-sm grid gap-1">
-            <span>Picture bonus</span>
-            <input id="picBonus" type="number" value="0.1" min="0" max="2" step="0.1"
-                   class="rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-          </label>
-          <label class="inline-flex items-center gap-2 mt-2 text-sm">
-            <input id="includeReview" type="checkbox" checked>
-            Include end Review as one paragraph
-          </label>
-        </div>
-      </div>
+  <label for="mnemonic">Mnemonic (pub code):</label>
+  <input id="mnemonic" placeholder="e.g. lff" autofocus>
 
-      <div class="glass bg-white/60 rounded-2xl shadow p-4">
-        <h2 class="text-lg font-semibold mb-3">HTML (optional)</h2>
-        <textarea id="html" rows="10" placeholder="Paste the article HTML here if needed"
-                  class="w-full rounded-xl border border-slate-200 bg-white/70 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"></textarea>
-        <div class="mt-3 flex gap-2">
-          <button id="calcBtn"
-                  class="rounded-xl px-4 py-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50">
-            Calculate timings
-          </button>
-        </div>
-      </div>
-
-      <div id="results" class="hidden space-y-4">
-        <div class="glass bg-white/70 rounded-2xl shadow p-4">
-          <h3 class="text-lg font-semibold mb-2">End-by Times</h3>
-          <ul id="milestones" class="space-y-2 text-sm"></ul>
-        </div>
-        <div class="glass bg-white/50 rounded-2xl shadow p-4">
-          <h3 class="text-lg font-semibold mb-2">Detected Structure</h3>
-          <div class="text-sm text-slate-700 space-y-2">
-            <p>
-              <strong>Paragraphs:</strong> <span id="paraCount">0</span>
-              <strong class="ml-2">Subheadings:</strong> <span id="sectionCount">0</span>
-            </p>
-            <ol id="sections" class="list-decimal ml-6 space-y-1"></ol>
-            <p class="text-xs text-slate-500 mt-3">
-              READ paragraphs detected: <span id="reads">none</span><br>
-              Picture paragraphs detected: <span id="pics">none</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="mt-10 text-center text-xs text-slate-600">
-      Tip: If fetching a jw.org page fails, toggle the CORS helper or paste the page HTML.
-    </footer>
-  </main>
+  <button id="go">Go</button>
+  <p id="msg" style="color: red;"></p>
 
   <script>
-    const $ = (sel) => document.querySelector(sel);
-    const urlEl = $("#url"), fetchBtn = $("#fetchBtn"), useCorsEl = $("#useCors"),
-          pasteBtn = $("#pasteBtn"), statusEl = $("#status"), htmlEl = $("#html"),
-          calcBtn = $("#calcBtn"), totalMinEl = $("#totalMin"), introSecEl = $("#introSec"),
-          conclSecEl = $("#conclSec"), readBonusEl = $("#readBonus"), picBonusEl = $("#picBonus"),
-          includeReviewEl = $("#includeReview"), resultsEl = $("#results"),
-          milestonesEl = $("#milestones"), paraCountEl = $("#paraCount"), sectionCountEl = $("#sectionCount"),
-          sectionsEl = $("#sections"), readsEl = $("#reads"), picsEl = $("#pics");
+    // Optional: map friendly names to pub codes if needed
+    const mapping = {
+      lff: 'lff',         // Enjoy Life Forever
+      lb:  'lb',          // brochures
+      tract: 'tract',     // tracts
+      mag: 'mag',         // magazines
+      // add more as needed…
+    };
 
-    pasteBtn.addEventListener("click", () => {
-      if (!htmlEl.value) htmlEl.value = "<!-- Paste article HTML here if Fetch is blocked -->\\n";
-      htmlEl.scrollIntoView({ behavior: "smooth" });
-    });
-
-    fetchBtn.addEventListener("click", async () => {
-      statusEl.textContent = "";
-      const url = (urlEl.value || "").trim();
-      if (!url) { statusEl.textContent = "Enter a URL or paste HTML."; return; }
-      fetchBtn.disabled = true; fetchBtn.textContent = "Fetching…";
-      try {
-        const finalUrl = useCorsEl.checked
-          ? "https://r.jina.ai/http://" + url.replace(/^https?:\\/\\//, "")
-          : url;
-        const res = await fetch(finalUrl, { mode: "cors" });
-        const text = await res.text();
-        htmlEl.value = text;
-        statusEl.textContent = "Fetched.";
-      } catch {
-        statusEl.textContent = "Fetch failed (likely CORS). Toggle 'CORS helper' or paste HTML.";
-      } finally {
-        fetchBtn.disabled = false; fetchBtn.textContent = "Fetch";
+    document.getElementById('go').onclick = () => {
+      const pub = document.getElementById('mnemonic').value.trim().toLowerCase();
+      if (!mapping[pub]) {
+        document.getElementById('msg').textContent = `Unknown mnemonic “${pub}.”`;
+        return;
       }
-    });
-
-    calcBtn.addEventListener("click", () => {
-      const html = htmlEl.value;
-      if (!html || !html.trim()) { statusEl.textContent = "Paste HTML or use Fetch first."; return; }
-      try {
-        const structure = parseArticle(html);
-        const result = computeTimings({
-          structure,
-          totalSeconds: Number(totalMinEl.value) * 60,
-          introSeconds: Number(introSecEl.value),
-          conclusionSeconds: Number(conclSecEl.value),
-          readBonus: Number(readBonusEl.value),
-          pictureBonus: Number(picBonusEl.value),
-          includeReview: includeReviewEl.checked
-        });
-        renderResults(result);
-      } catch {
-        statusEl.textContent = "Parsing failed.";
-      }
-    });
-
-    function renderResults(result) {
-      milestonesEl.innerHTML = "";
-      for (const m of result.milestones) {
-        const li = document.createElement("li");
-        li.className = "flex justify-between border-b border-slate-200/60 pb-1";
-        li.innerHTML = \`<span>\${escapeHtml(m.label)}</span><span class="mono">\${formatTime(m.endBySeconds)}</span>\`;
-        milestonesEl.appendChild(li);
-      }
-      paraCountEl.textContent = result.structure.paragraphs.length;
-      sectionCountEl.textContent = result.structure.sections.length;
-      sectionsEl.innerHTML = "";
-      for (const s of result.structure.sections) {
-        const li = document.createElement("li");
-        li.innerHTML = \`<div class="font-medium">\${escapeHtml(s.title || "(untitled)")} <span class="text-slate-500">(¶\${s.startPid}–\${s.endPid})</span></div>\`;
-        sectionsEl.appendChild(li);
-      }
-      const readPids = result.structure.paragraphs.filter(p => p.hasRead).map(p => p.pid);
-      readsEl.textContent = readPids.length ? readPids.join(", ") : "none";
-      const picPids = result.structure.paragraphs.filter(p => p.hasPicture).map(p => p.pid);
-      picsEl.textContent = picPids.length ? picPids.join(", ") : "none";
-      resultsEl.classList.remove("hidden");
-      resultsEl.scrollIntoView({ behavior: "smooth" });
-    }
-
-    function parseArticle(html) {
-      const dom = new DOMParser().parseFromString(html, "text/html");
-      const scope = dom.querySelector("article, main, [role=main], .content, #article") || dom.body;
-      const pNodes = Array.from(scope.querySelectorAll("p[data-pid], p[id^='p'], p.paragraph, p"));
-      const paragraphs = [];
-      for (const p of pNodes) {
-        let pid = null;
-        const dataPid = p.getAttribute("data-pid");
-        if (dataPid && /^\\d+$/.test(dataPid)) pid = Number(dataPid);
-        if (!pid) {
-          const id = p.getAttribute("id") || "";
-          const m = id.match(/^p(\\d+)$/i);
-          if (m) pid = Number(m[1]);
-        }
-        if (!pid) {
-          const txt = (p.textContent || "").trim();
-          const m2 = txt.match(/^(\\d{1,2})[\\s·.]/);
-          if (m2) pid = Number(m2[1]);
-        }
-        if (!pid) continue;
-        const text = (p.textContent || "").toUpperCase();
-        const hasRead = /\\bREAD\\b/.test(text) || /READ\\s*:\\s*/.test(text);
-        const hasPicture =
-          !!p.querySelector("img, figure") ||
-          !!(p.previousElementSibling && p.previousElementSibling.matches("figure, .media")) ||
-          !!(p.nextElementSibling && p.nextElementSibling.matches("figure, .media")) ||
-          /PICTURE|SEE PICTURE|IMAGE/i.test(p.textContent || "");
-        paragraphs.push({ pid, hasRead, hasPicture });
-      }
-      paragraphs.sort((a, b) => a.pid - b.pid);
-      const headingNodes = Array.from(scope.querySelectorAll("h2, h3"));
-      const sections = [];
-      for (let i = 0; i < headingNodes.length; i++) {
-        const h = headingNodes[i];
-        const title = (h.textContent || "").trim();
-        const startPid = pidOfNextParagraphAfter(h);
-        if (!startPid) continue;
-        let endPid = null;
-        for (let j = i + 1; j < headingNodes.length; j++) {
-          const nextStart = pidOfNextParagraphAfter(headingNodes[j]);
-          if (nextStart) { endPid = nextStart - 1; break; }
-        }
-        if (endPid == null) endPid = paragraphs.length ? paragraphs[paragraphs.length - 1].pid : startPid;
-        if (endPid < startPid) continue;
-        sections.push({ title, startPid, endPid });
-      }
-      sections.sort((a, b) => a.startPid - b.startPid);
-      return { paragraphs, sections };
-      function pidOfNextParagraphAfter(node) {
-        let n = node;
-        while ((n = n.nextElementSibling)) {
-          if (n.matches("p[data-pid], p[id^='p'], p.paragraph, p")) {
-            const t = (n.textContent || "").trim();
-            const id = n.getAttribute("id") || "";
-            const dataPid = n.getAttribute("data-pid");
-            let pid = null;
-            if (dataPid && /^\\d+$/.test(dataPid)) pid = Number(dataPid);
-            const m = id.match(/^p(\\d+)$/i) || t.match(/^(\\d{1,2})[\\s·.]/);
-            if (!pid && m) pid = Number(m[1]);
-            if (pid) return pid;
-          }
-        }
-        return null;
-      }
-    }
-
-    function computeTimings({ structure, totalSeconds, introSeconds, conclusionSeconds, readBonus, pictureBonus, includeReview }) {
-      const pool = Math.max(0, totalSeconds - introSeconds - conclusionSeconds);
-      const firstSectionStart = structure.sections[0]?.startPid ?? Infinity;
-      const openingParas = structure.paragraphs.filter(p => p.pid < firstSectionStart);
-      const buckets = [];
-      if (openingParas.length) {
-        const a = openingParas[0].pid, b = openingParas[openingParas.length - 1].pid;
-        buckets.push({ label: \`Opening paragraphs (¶\${a}–\${b})\`, pids: openingParas.map(p=>p.pid) });
-      }
-      for (const s of structure.sections) {
-        const pids = structure.paragraphs.filter(p => p.pid >= s.startPid && p.pid <= s.endPid).map(p => p.pid);
-        if (pids.length) buckets.push({ label: \`\${s.title} (¶\${s.startPid}–\${s.endPid})\`, pids });
-      }
-      const reviewPid = (structure.paragraphs[structure.paragraphs.length - 1]?.pid || 0) + 1;
-      if (includeReview) buckets.push({ label: "Review (box)", pids: [reviewPid] });
-      const paraMap = new Map(structure.paragraphs.map(p => [p.pid, p]));
-      function weightOf(pid) {
-        const p = paraMap.get(pid);
-        if (!p) return 1;
-        let w = 1;
-        if (p.hasRead) w += readBonus;
-        if (p.hasPicture) w += pictureBonus;
-        return w;
-      }
-      const totalWeight = buckets.reduce((sum, b) => sum + b.pids.reduce((s, pid) => s + weightOf(pid), 0), 0);
-      const secondsPerWeight = totalWeight > 0 ? pool / totalWeight : 0;
-      const milestones = [];
-      let t = introSeconds;
-      milestones.push({ key: "intro", label: "Intro ends", endBySeconds: t });
-      for (const b of buckets) {
-        const bucketSeconds = b.pids.reduce((s, pid) => s + weightOf(pid) * secondsPerWeight, 0);
-        t += bucketSeconds;
-        milestones.push({ key: b.label, label: b.label, endBySeconds: t });
-      }
-      milestones.push({ key: "conclusion", label: "Conclusion ends", endBySeconds: totalSeconds });
-      return { milestones, structure };
-    }
-
-    function formatTime(totalSeconds) {
-      totalSeconds = Math.round(totalSeconds);
-      const m = Math.floor(totalSeconds / 60).toString();
-      const s = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
-      return m + ":" + s;
-    }
-    function escapeHtml(str) {
-      return (str ?? "").toString().replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-    }
+      const lang = document.getElementById('lang').value;
+      const url = `https://www.jw.org/finder?wtlocale=${lang}&pub=${encodeURIComponent(mapping[pub])}`;
+      window.location.href = url;
+    };
   </script>
 </body>
 </html>
