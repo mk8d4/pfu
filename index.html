@@ -13,13 +13,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
     }
     .container {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 16px;
       padding: 2rem;
-      max-width: 420px;
+      max-width: 480px;
       width: 90%;
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
       text-align: center;
@@ -29,56 +29,54 @@
       font-size: 1.6rem;
       color: #333;
     }
-    input[type="text"], button {
-      width: 100%;
+    .radio-group {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+    }
+    .radio-group label { font-size: 1rem; color: #333; }
+
+    /* Input centered and half width on desktop */
+    .input-wrap { display: flex; justify-content: center; }
+    #mnemonic {
+      width: 50%;
+      min-width: 220px;
+      max-width: 320px;
       padding: 0.75rem;
       margin-bottom: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 1rem;
     }
-    .radio-group {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 1rem;
-    }
-    .radio-group label {
-      font-size: 1rem;
-      color: #333;
-    }
+
     button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
       border: none;
       cursor: pointer;
       background-color: #667eea;
       color: #fff;
+      border-radius: 8px;
+      font-size: 1rem;
       transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #5a67d8;
-    }
-    #msg {
-      color: red;
-      height: 1.25rem;
-    }
-    #qr-container {
-      margin-top: 1rem;
-      display: none;
-    }
-    #qr-code {
-      width: 150px;
-      height: 150px;
-      margin: 0 auto;
-    }
+    button:hover { background-color: #5a67d8; }
+
+    #msg { color: red; min-height: 1.25rem; }
+
+    #qr-container { margin-top: 1rem; display: none; }
+    #qr-code { width: 150px; height: 150px; margin: 0 auto; }
+
+    /* Place New Search slightly lower */
+    #new-search { margin-top: 8px; background-color: #6b7280; }
+    #new-search:hover { background-color: #4b5563; }
+
     @media (max-width: 600px) {
-      .container {
-        padding: 1rem;
-      }
-      h1 {
-        font-size: 1.25rem;
-      }
-      button, input {
-        font-size: 0.9rem;
-      }
+      .container { padding: 1rem; }
+      h1 { font-size: 1.25rem; }
+      #mnemonic { width: 100%; }
+      button, input { font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -91,91 +89,97 @@
       <label><input type="radio" name="lang" value="ase"> ASL</label>
     </div>
 
-    <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
+    <div class="input-wrap">
+      <input id="mnemonic" type="text" placeholder="Enter mnemonic (e.g. lff)" autofocus>
+    </div>
     <div id="msg"></div>
-    <button id="search-btn">Search</button>
+    <button id="find-btn">Find</button>
 
     <div id="extra-buttons" style="display:none;">
-      <button id="go-btn">Go to Publication</button>
-      <button id="qr-btn">Display QR Code</button>
+      <button id="toc-btn">Table of Contents</button>
+      <button id="qr-btn">QR Code</button>
       <button id="share-btn">Share Link</button>
       <div id="qr-container">
         <canvas id="qr-code"></canvas>
       </div>
+      <button id="new-search" style="display:none;">New Search</button>
     </div>
   </div>
 
   <!-- QRious library for QR code generation -->
   <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
   <script>
-    const mapping = {
-      lff: 'lff',
-      lb: 'lb',
-      tract: 'tract',
-      mag: 'mag',
-      nwtsty: 'nwtsty'
-    };
-
     const mnemonicEl = document.getElementById('mnemonic');
     const msgEl = document.getElementById('msg');
-    const searchBtn = document.getElementById('search-btn');
-    const goBtn = document.getElementById('go-btn');
+    const findBtn = document.getElementById('find-btn');
+    const tocBtn = document.getElementById('toc-btn');
     const qrBtn = document.getElementById('qr-btn');
     const shareBtn = document.getElementById('share-btn');
+    const newSearchBtn = document.getElementById('new-search');
     const extraButtons = document.getElementById('extra-buttons');
     const qrContainer = document.getElementById('qr-container');
     const qrCanvas = document.getElementById('qr-code');
     let currentUrl = null;
+    let qrInstance = null;
 
     function getSelectedLanguage() {
       const radios = document.querySelectorAll('input[name="lang"]');
-      for (const radio of radios) {
-        if (radio.checked) return radio.value;
-      }
+      for (const radio of radios) if (radio.checked) return radio.value;
       return 'en';
     }
 
     function buildUrl() {
-      const pub = mnemonicEl.value.trim().toLowerCase();
-      if (!pub || !mapping[pub]) {
-        msgEl.textContent = `Unknown mnemonic “${pub}.”`;
-        return null;
-      }
+      const pub = mnemonicEl.value.trim();
+      if (!pub) { msgEl.textContent = 'Please enter a mnemonic.'; return null; }
       msgEl.textContent = '';
       const locale = getSelectedLanguage();
-      return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(mapping[pub])}`;
+      return `https://www.jw.org/finder?wtlocale=${locale}&pub=${encodeURIComponent(pub)}`;
     }
 
-    searchBtn.addEventListener('click', () => {
+    function doSearch() {
       const url = buildUrl();
-      if (url) {
-        currentUrl = url;
-        extraButtons.style.display = 'block';
-      }
-    });
+      if (!url) return;
+      currentUrl = url;
+      extraButtons.style.display = 'block';
+      findBtn.style.display = 'none';
+      newSearchBtn.style.display = 'block';
+      // reset QR each search
+      qrContainer.style.display = 'none';
+      if (qrInstance) { qrInstance = null; qrCanvas.getContext && qrCanvas.getContext('2d')?.clearRect(0,0,qrCanvas.width,qrCanvas.height); }
+    }
 
-    goBtn.addEventListener('click', () => {
-      if (currentUrl) window.location.href = currentUrl;
-    });
+    findBtn.addEventListener('click', doSearch);
+    mnemonicEl.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') doSearch(); });
+
+    tocBtn.addEventListener('click', () => { if (currentUrl) window.location.href = currentUrl; });
 
     qrBtn.addEventListener('click', () => {
       if (!currentUrl) return;
       qrContainer.style.display = 'block';
-      new QRious({
-        element: qrCanvas,
-        value: currentUrl,
-        size: 150
-      });
+      // Recreate QR each time to ensure fresh value
+      const qr = new QRious({ element: qrCanvas, value: currentUrl, size: 150 });
+      qrInstance = qr;
     });
 
     shareBtn.addEventListener('click', async () => {
       if (!currentUrl) return;
       try {
         await navigator.clipboard.writeText(currentUrl);
+        msgEl.style.color = '#16a34a';
         msgEl.textContent = 'Link copied to clipboard!';
+        setTimeout(()=>{ msgEl.textContent=''; msgEl.style.color='red'; }, 1800);
       } catch (e) {
         msgEl.textContent = 'Failed to copy link.';
       }
+    });
+
+    newSearchBtn.addEventListener('click', () => {
+      mnemonicEl.value = '';
+      currentUrl = null;
+      extraButtons.style.display = 'none';
+      findBtn.style.display = 'block';
+      msgEl.textContent = '';
+      qrContainer.style.display = 'none';
     });
   </script>
 </body>
