@@ -90,16 +90,18 @@
     <div id="msg"></div>
     <button id="find-btn" class="primary">Find</button>
 
-    <div id="extra-buttons" class="actions" style="display:none;">
-      <button id="toc-btn" class="primary">Table of Contents</button>
-      <button id="qr-btn" class="primary">QR Code</button>
-      <button id="share-btn" class="primary">Share Link</button>
-      <div id="qr-container"><canvas id="qr-code"></canvas></div>
-      <div class="footer-actions">
-        <button id="new-search" style="display:none;">New Search</button>
-      </div>
-    </div>
+   <div id="extra-buttons" class="actions" style="display:none;">
+  <div class="outcome-row">
+    <button id="toc-btn" class="icon-btn" title="Table of Contents" aria-label="Table of Contents">📑</button>
+    <button id="qr-btn" class="icon-btn" title="QR Code" aria-label="QR Code">🔳</button>
+    <button id="share-btn" class="icon-btn" title="Share Link" aria-label="Share Link">🔗</button>
   </div>
+  <div id="qr-container"><canvas id="qr-code"></canvas></div>
+  <div class="footer-actions">
+    <button id="new-search" style="display:none;">New Search</button>
+  </div>
+</div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
   <script>
