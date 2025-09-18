@@ -52,6 +52,7 @@ button { width:100%; padding:.75rem; margin-bottom:1rem; border:none; cursor:poi
 button:hover { background-color:#5a67d8; }
 
 
+
 /* Outcome buttons row */
 .outcome-row { display:flex; gap:.5rem; justify-content:center; align-items:center; margin:.25rem auto .5rem; width:max-content; }
 .icon-btn { width:auto; padding:.45rem .6rem; margin:0; background:#f8fafc; color:#333; border:1px solid #d1d5db; border-radius:8px; font-size:1.1rem; line-height:1; }
@@ -270,23 +271,26 @@ const modeSwitch = document.getElementById('mode-switch');
     };
 
     function parseBibleRef(input){
-      const s = input.trim().replace(/\s+/g,' ');
-      const m = /^([1-3]?\s?[A-Za-z ]+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i.exec(s);
-      if(!m) return null;
-      const bookKey = m[1].toLowerCase().trim();
-      const bookCode = BOOK_CODES[bookKey];
-      if(!bookCode) return null;
-      const chap = parseInt(m[2],10);
-      const v1 = m[3] ? parseInt(m[3],10) : null;
-      const v2 = m[4] ? parseInt(m[4],10) : null;
-      const left = bookCode + pad2(chap) + pad3(v1 ?? 0);
-      if(v1===null){ return left; }
-      if(v2){
-        const right = bookCode + pad2(chap) + pad3(v2);
-        return left + '-' + right;
-      }
-      return left;
-    }
+  const s = input.trim().replace(/\s+/g,' ');
+  const m = /^([1-3]?\s?[A-Za-z ]+?)\s+(\d+)(?::(\d+)(?:-(\d+))?)?$/i.exec(s);
+  if(!m) return null;
+  const bookKey = m[1].toLowerCase().trim();
+  const bookCode = BOOK_CODES[bookKey];
+  if(!bookCode) return null;
+  const pad2 = n => String(n).padStart(2,'0');
+  const pad3 = n => String(n).padStart(3,'0');
+  const chap  = parseInt(m[2],10);
+  const v1    = m[3] ? parseInt(m[3],10) : null;
+  const v2    = m[4] ? parseInt(m[4],10) : null;
+
+  const left = bookCode + pad2(chap) + pad3(v1 ?? 0);
+  if (v1 === null) return left; // whole chapter e.g., 40006000
+  if (v2){
+    const right = bookCode + pad2(chap) + pad3(v2);
+    return left + '-' + right;  // range e.g., 40006033-40006034
+  }
+  return left; // single verse e.g., 40006033
+}
 
     function parsePeriodical(input){
       const s = input.trim();
@@ -323,9 +327,6 @@ const modeSwitch = document.getElementById('mode-switch');
 modeSwitch && modeSwitch.addEventListener('change', updateModeUI);
 updateModeUI();
 
-    modeToggleBtn.addEventListener('click', ()=>{ mode = (mode === 'pub') ? 'bible' : 'pub'; updateModeUI(); });
-    updateModeUI();
-
     function buildUrl(){
       const wtlocale = getSelectedLanguage();
       const raw = (searchInput.value||'').trim();
@@ -350,7 +351,7 @@ updateModeUI();
       if(!url) return;
       currentUrl = url;
       document.querySelector('.mode-group').style.display = 'none'; // hide mode button on search
-      extraButtons.style.display='grid';
+      extraButtons.style.display = 'grid';
       findBtn.style.display='none';
       newSearchBtn.style.display='inline-block';
       qrContainer.style.display='none';
